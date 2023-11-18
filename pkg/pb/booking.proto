@@ -13,7 +13,7 @@ enum Type {
 }
 
 message SearchFlightRequest {
-  Type type = 1;
+  string type = 1;
   string adults = 2;
   string children = 3;
   string from_airport = 4;
@@ -21,6 +21,7 @@ message SearchFlightRequest {
   string depart_date = 6;
   string return_date = 7;
   string page = 8;
+  string max_stops = 9;
 }
 
 message SearchFlightResponse {

@@ -1,12 +1,12 @@
 package pkg
 
 import (
-	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/raedmajeed/booking-service/config"
 	"github.com/raedmajeed/booking-service/pkg/api/handlers"
 	pb "github.com/raedmajeed/booking-service/pkg/pb"
+	"github.com/raedmajeed/booking-service/pkg/service/interfaces"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -15,14 +15,17 @@ import (
 type Server struct {
 	E   *gin.Engine
 	cfg *config.ConfigParams
+	svc interfaces.BookingService
 }
 
-func NewServer(cfg *config.ConfigParams, handler *handlers.BookingHandler, kf *config.KafkaConfigStruct) (*Server, error) {
-	newCont, cancel := context.WithCancel(context.Background())
-	defer cancel()
+func NewServer(cfg *config.ConfigParams, handler *handlers.BookingHandler, svc interfaces.BookingService) (*Server, error) {
+	//newCont, cancel := context.WithCancel(context.Background())
+	//defer cancel()
 
-	go kf.SearchReaderMethod(newCont)
+	//kf := config.NewKafkaReaderConnect(svc)
+	//go kf.SearchReaderMethod(newCont)
 	err := NewGrpcServer(cfg, handler)
+
 	if err != nil {
 		log.Println("error connecting to gRPC server")
 		return nil, err
@@ -31,6 +34,7 @@ func NewServer(cfg *config.ConfigParams, handler *handlers.BookingHandler, kf *c
 	return &Server{
 		E:   r,
 		cfg: cfg,
+		svc: svc,
 	}, nil
 }
 
