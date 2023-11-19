@@ -2,10 +2,8 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"github.com/segmentio/kafka-go"
 	"log"
-	"sync"
 )
 
 type KafkaReader2 struct {
@@ -15,7 +13,7 @@ type KafkaReader2 struct {
 func NewKafkaReaderConnect() *KafkaReader2 {
 	searchReader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  []string{"localhost:9092"},
-		Topic:    "search-flight-response",
+		Topic:    "search-flight-response-1",
 		GroupID:  "search-response-1",
 		MaxBytes: 10e1,
 	})
@@ -24,28 +22,27 @@ func NewKafkaReaderConnect() *KafkaReader2 {
 	}
 }
 
-func (kf *KafkaReader2) SearchReaderMethod(ctx context.Context, group *sync.WaitGroup, messageChan chan kafka.Message) {
+func (kf *KafkaReader2) SearchReaderMethod(ctx context.Context) kafka.Message {
 	//defer group.Done()
 	log.Println("kafka topic search-flight-response listening")
 	//go func() {
+	var message kafka.Message
 	for {
-		message, _ := kf.SearchReader.FetchMessage(ctx)
-		fmt.Println(string(message.Value))
+		message, _ = kf.SearchReader.FetchMessage(ctx)
 		select {
 		case <-ctx.Done():
 			log.Println("context cancelled returning")
-			return
+			return kafka.Message{}
 		default:
 			err := kf.SearchReader.CommitMessages(ctx, message)
 			if err != nil {
-				return
+				return kafka.Message{}
 			}
-			log.Println("message++++", string(message.Value))
-			break
+			//break
 		}
 		break
 	}
-	fmt.Println("yahooo")
+	return message
 	//}()
 	//return messageChan
 }
