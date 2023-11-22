@@ -11,7 +11,7 @@ import (
 	"github.com/raedmajeed/booking-service/pkg/service"
 )
 
-func InitApi(cfg *config.ConfigParams, redis *redis.Client) (*pkg.Server, error) {
+func InitApi(cfg *config.ConfigParams, redis *redis.Client, twilio *config.TwilioVerify) (*pkg.Server, error) {
 
 	// db connection
 	DB, err := db.NewDBConnect(cfg)
@@ -21,7 +21,7 @@ func InitApi(cfg *config.ConfigParams, redis *redis.Client) (*pkg.Server, error)
 	kfWriter := config.NewKafkaWriterConnect()
 	kfReader := config.NewKafkaReaderConnect()
 	repo := repository.NewBookingRepository(DB)
-	svc := service.NewBookingService(repo, redis, cfg, kfWriter, kfReader)
+	svc := service.NewBookingService(repo, redis, cfg, kfWriter, kfReader, twilio)
 	hdlr := handlers.NewBookingHandler(svc)
 	server, err := api.NewServer(cfg, hdlr, svc)
 	if err != nil {

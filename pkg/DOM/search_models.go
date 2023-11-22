@@ -1,6 +1,8 @@
 package DOM
 
-import "time"
+import (
+	"time"
+)
 
 type SearchDetails struct {
 	DepartureAirport    string
@@ -33,7 +35,14 @@ type Path struct {
 	TotalTravelTime float64
 }
 
-type KafkaPath struct {
+type KafkaPaths struct {
 	DirectPath []Path
 	ReturnPath []Path
+}
+
+type AdditionalInfo struct {
+	AdultsCount   int
+	ChildrenCount int
+	PassengerType string
+	Economy       bool
 }

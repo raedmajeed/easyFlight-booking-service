@@ -5,17 +5,21 @@ import (
 )
 
 type KafkaWriter struct {
-	SearchWriter *kafka.Writer
+	SearchWriter       *kafka.Writer
+	SearchSelectWriter *kafka.Writer
 }
 
 func NewKafkaWriterConnect() *KafkaWriter {
 	searchWriter := &kafka.Writer{
-		Addr:         kafka.TCP("localhost:9092"),
-		Topic:        "search-flight-request",
-		Async:        true,
-		RequiredAcks: 0,
+		Addr:  kafka.TCP("localhost:9092"),
+		Topic: "search-flight-request",
+	}
+	searchSelectWriter := &kafka.Writer{
+		Addr:  kafka.TCP("localhost:9092"),
+		Topic: "search-flight-request-4",
 	}
 	return &KafkaWriter{
-		SearchWriter: searchWriter,
+		SearchWriter:       searchWriter,
+		SearchSelectWriter: searchSelectWriter,
 	}
 }

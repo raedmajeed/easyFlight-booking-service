@@ -8,20 +8,23 @@ import (
 )
 
 type BookingServiceStruct struct {
-	repo  inter.BookingRepostory
-	redis *redis.Client
-	cfg   *config.ConfigParams
-	kf    *config.KafkaWriter
-	kf2   *config.KafkaReader2
+	repo   inter.BookingRepository
+	redis  *redis.Client
+	cfg    *config.ConfigParams
+	kf     *config.KafkaWriter
+	kf2    *config.KafkaReader2
+	twilio *config.TwilioVerify
 }
 
-func NewBookingService(repo inter.BookingRepostory, redis *redis.Client,
-	cfg *config.ConfigParams, kf *config.KafkaWriter, kf2 *config.KafkaReader2) interfaces.BookingService {
+func NewBookingService(repo inter.BookingRepository, redis *redis.Client,
+	cfg *config.ConfigParams, kf *config.KafkaWriter, kf2 *config.KafkaReader2,
+	twilio *config.TwilioVerify) interfaces.BookingService {
 	return &BookingServiceStruct{
-		repo:  repo,
-		redis: redis,
-		cfg:   cfg,
-		kf:    kf,
-		kf2:   kf2,
+		repo:   repo,
+		redis:  redis,
+		cfg:    cfg,
+		kf:     kf,
+		kf2:    kf2,
+		twilio: twilio,
 	}
 }

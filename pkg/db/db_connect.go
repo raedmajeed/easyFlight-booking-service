@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/raedmajeed/booking-service/pkg/DOM"
 	"log"
 
 	"github.com/raedmajeed/booking-service/config"
@@ -22,7 +23,7 @@ func NewDBConnect(cfg *config.ConfigParams) (*gorm.DB, error) {
 	}
 
 	// MIGRATING DB
-	err = database.AutoMigrate()
+	err = database.AutoMigrate(&DOM.UserData{}, &DOM.Booking{}, &DOM.Traveller{})
 
 	if err != nil {
 		log.Printf("unable to migrate db, err: %v", err)
