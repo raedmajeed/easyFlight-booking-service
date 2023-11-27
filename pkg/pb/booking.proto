@@ -1,0 +1,139 @@
+syntax = "proto3";
+
+option go_package = ".";
+
+
+service Booking {
+  rpc RegisterSearchFlight(SearchFlightRequest) returns (SearchFlightResponse);
+  rpc RegisterSearchSelect(SearchSelectRequest) returns (SearchSelectResponse);
+  rpc RegisterTravellerDetails(TravellerRequest) returns (TravellerResponse);
+  rpc RegisterLoginRequest(LoginRequest) returns (LoginResponse);
+  rpc RegisterUser(UserRequest) returns (UserResponse);
+  rpc VerifyUser(OTPRequest) returns (UserResponse);
+}
+
+enum Type {
+  BUSINESS = 0;
+  ECONOMY = 1;
+}
+
+message SearchFlightRequest {
+  string type = 1;
+  string adults = 2;
+  string children = 3;
+  string from_airport = 4;
+  string to_airport = 5;
+  string depart_date = 6;
+  string return_date = 7;
+  string page = 8;
+  string max_stops = 9;
+  string passenger_type = 10;
+}
+
+message FlightDetails {
+  string flight_number = 1;
+  string airline = 2;
+  string departure_airport = 3;
+  string departure_date = 4;
+  string departure_time = 5;
+  string arrival_airport = 6;
+  string arrival_date = 7;
+  string arrival_time = 8;
+}
+
+message SearchFlightDetails {
+  int32 path_id = 1;
+  int32 number_of_stops = 2;
+  repeated FlightDetails flight_segment = 3;
+}
+
+message SearchFlightResponse {
+  int32 total_direct_flights = 1;
+  int32 total_return_flights = 2;
+  repeated SearchFlightDetails to_flights = 3;
+  repeated SearchFlightDetails return_flights = 4;
+  string search_token = 5;
+}
+
+message SearchSelectRequest {
+  string token = 1;
+  string direct_path_id = 2;
+  string return_path_id = 3;
+}
+
+message Cancellation {
+  int32 cancellation_deadline_before = 1;
+  int32 cancellation_percentage = 2;
+  bool refundable = 3;
+}
+
+message Baggage {
+  int32 cabin_allowed_weight = 1;
+  int32 cabin_allowed_length = 2;
+  int32 cabin_allowed_breadth = 3;
+  int32 cabin_allowed_height = 4;
+  int32 hand_allowed_weight = 5;
+  int32 hand_allowed_length = 6;
+  int32 hand_allowed_breadth = 7;
+  int32 hand_allowed_height = 8;
+  int32 fee_for_extra_kg_cabin = 9;
+  int32 fee_for_extra_kg_hand = 10;
+  string restrictions = 11;
+}
+
+message Facilities {
+  Cancellation cancellation = 1;
+  Baggage baggage = 2;
+  SearchFlightDetails path = 3;
+}
+
+message SearchSelectResponse {
+  Facilities direct_flight = 1;
+  Facilities return_flight = 2;
+  int32 number_of_adults = 3;
+  int32 number_of_children = 4;
+  string cabin_class = 5;
+}
+
+message TravellerDetails {
+  string name = 1;
+  string age = 2;
+  string gender = 3;
+}
+
+message TravellerRequest {
+  repeated TravellerDetails traveller_details = 1;
+  string email = 2;
+  string token = 3;
+}
+
+message TravellerResponse {
+  string booking_reference = 1;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+  string role = 3;
+}
+
+message LoginResponse {
+  string email = 1;
+  string token = 2;
+}
+
+message OTPRequest {
+  int32 otp = 1;
+  string email = 2;
+}
+
+message UserRequest {
+  string user_name = 1;
+  string phone_number = 2;
+  string email = 3;
+  string password = 4;
+}
+
+message UserResponse {
+  string email = 1;
+}
