@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/go-redis/redis/v8"
 	"github.com/raedmajeed/booking-service/config"
+	pb "github.com/raedmajeed/booking-service/pkg/pb"
 	inter "github.com/raedmajeed/booking-service/pkg/repository/interfaces"
 	"github.com/raedmajeed/booking-service/pkg/service/interfaces"
 )
@@ -14,11 +15,12 @@ type BookingServiceStruct struct {
 	kf     *config.KafkaWriter
 	kf2    *config.KafkaReader2
 	twilio *config.TwilioVerify
+	client pb.AdminServiceClient
 }
 
 func NewBookingService(repo inter.BookingRepository, redis *redis.Client,
 	cfg *config.ConfigParams, kf *config.KafkaWriter, kf2 *config.KafkaReader2,
-	twilio *config.TwilioVerify) interfaces.BookingService {
+	twilio *config.TwilioVerify, client pb.AdminServiceClient) interfaces.BookingService {
 	return &BookingServiceStruct{
 		repo:   repo,
 		redis:  redis,
@@ -26,5 +28,6 @@ func NewBookingService(repo inter.BookingRepository, redis *redis.Client,
 		kf:     kf,
 		kf2:    kf2,
 		twilio: twilio,
+		client: client,
 	}
 }

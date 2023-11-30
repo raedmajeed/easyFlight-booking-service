@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package admin;
+
+
+option go_package = ".";
+
+service AdminService {
+  rpc RegisterSelectSeat(SeatRequest) returns (SeatResponse);
+  rpc AddConfirmedSeats(ConfirmedSeatRequest) returns (ConfirmedSeatResponse);
+}
+
+message SeatRequest {
+  string PNR = 1;
+  repeated string seat_array = 2;
+  int32 flight_chart_id = 3;
+  string email = 4;
+  bool economy = 5;
+}
+
+message SeatResponse {
+  string PNR = 1;
+  repeated string seat_nos = 2;
+}
+
+message ConfirmedSeatRequest {
+  bool economy = 1;
+  int32 travellers = 2;
+  repeated int32 flight_chart_id_direct = 3;
+  repeated int32 flight_chart_id_indirect = 4;
+}
+
+message ConfirmedSeatResponse {
+
+}

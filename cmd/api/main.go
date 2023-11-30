@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/raedmajeed/booking-service/config"
+	client "github.com/raedmajeed/booking-service/pkg/api"
 	"github.com/raedmajeed/booking-service/pkg/di"
 	"log"
 )
@@ -9,16 +10,10 @@ import (
 func main() {
 	cfg, err, redis := config.Configuration()
 	twilio := config.SetupTwilio(cfg)
+	c, err := client.NewGrpcClient(cfg)
 	if err != nil {
 		log.Printf("unable to load env values, err: %v", err.Error())
 		return
 	}
-	server, err := di.InitApi(cfg, redis, twilio)
-	if err != nil {
-		log.Fatalf("Server not starter due to error: %v", err.Error())
-		return
-	}
-	if err = server.ServerStart(); err != nil {
-		log.Fatalf("Server not starter due to error: %v", err.Error())
-	}
+	di.InitApi(cfg, redis, twilio, *c)
 }

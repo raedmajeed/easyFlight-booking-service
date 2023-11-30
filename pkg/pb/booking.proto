@@ -10,8 +10,18 @@ service Booking {
   rpc RegisterLoginRequest(LoginRequest) returns (LoginResponse);
   rpc RegisterUser(UserRequest) returns (UserResponse);
   rpc VerifyUser(OTPRequest) returns (UserResponse);
+
+  // rpc calls for confirmed booking users
+  rpc RegisterPNRLogin(PNRLoginRequest) returns (PNRLoginResponse);
+  rpc RegisterSelectSeat(SeatSelectRequest) returns (SeatSelectResponse);
+
+  // rpc calls for booking
+  rpc RegisterConfirmBooking(ConfirmBookingRequest) returns (ConfirmBookingResponse);
+  rpc RegisterOnlinePayment(OnlinePaymentRequest) returns (OnlinePaymentResponse);
+  rpc ResisterPaymentConfirmed(PaymentConfirmedRequest) returns (PaymentConfirmedResponse);
 }
 
+// search methods for flights
 enum Type {
   BUSINESS = 0;
   ECONOMY = 1;
@@ -39,6 +49,7 @@ message FlightDetails {
   string arrival_airport = 6;
   string arrival_date = 7;
   string arrival_time = 8;
+  float flight_fare = 9;
 }
 
 message SearchFlightDetails {
@@ -95,6 +106,8 @@ message SearchSelectResponse {
   string cabin_class = 5;
 }
 
+// traveller details request
+
 message TravellerDetails {
   string name = 1;
   string age = 2;
@@ -110,6 +123,8 @@ message TravellerRequest {
 message TravellerResponse {
   string booking_reference = 1;
 }
+
+// user login requests
 
 message LoginRequest {
   string email = 1;
@@ -136,4 +151,80 @@ message UserRequest {
 
 message UserResponse {
   string email = 1;
+}
+
+// confirmed user messages
+
+message PNRLoginRequest {
+  string email = 1;
+  string PNR  = 2;
+}
+
+message PNRLoginResponse {
+  string email = 1;
+  string PNR  = 2;
+  string token = 3;
+}
+
+
+message SeatSelectRequest {
+  string PNR = 1;
+  repeated string seat_array = 2;
+  int32 flight_chart_id = 3;
+}
+
+message SeatSelectResponse {
+  string PNR = 1;
+  repeated string seat_nos = 2;
+}
+
+// confirm booking request
+
+message ConfirmBookingRequest {
+  string email = 1;
+  string token = 2;
+  string booking_reference = 3;
+}
+
+message ConfirmBookingResponse {
+  DirectReturnFlight direct_flight = 1;
+  DirectReturnFlight return_flight = 2;
+  int32 number_of_adults = 3;
+  int32 number_of_children = 4;
+  string cabin_class = 5;
+  string booking_reference = 6;
+  string token = 7;
+}
+
+message DirectReturnFlight {
+  repeated FlightDetails flight_details = 1;
+  int32 number_of_stops = 2;
+  Cancellation cancellation = 3;
+  Baggage baggage = 4;
+}
+
+message OnlinePaymentRequest {
+  string booking_reference = 1;
+  string email = 2;
+}
+
+message OnlinePaymentResponse {
+  int32 user_id = 1;
+  float total_fare = 2;
+  string booking_reference = 3;
+  string email = 4;
+  string order_id = 5;
+}
+
+message PaymentConfirmedRequest {
+  string email = 1;
+  string booking_reference = 2;
+  string payment_id = 3;
+  string token = 4;
+}
+
+message PaymentConfirmedResponse {
+  string payment_id = 1;
+  string booking_id = 2;
+  string PNR =3 ;
 }

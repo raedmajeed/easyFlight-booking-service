@@ -2,7 +2,6 @@ package utils
 
 import (
 	"errors"
-	"fmt"
 	"github.com/raedmajeed/booking-service/pkg/DOM"
 	"log"
 	"time"
@@ -27,7 +26,6 @@ type SearchClaims struct {
 
 func GenerateToken(email, role string, cfg *config.ConfigParams) (string, error) {
 	expireTime := time.Now().Add(time.Minute * 20).Unix()
-	fmt.Println(email, role)
 	claims := &Claims{
 		Email: email,
 		Role:  role,
@@ -41,6 +39,27 @@ func GenerateToken(email, role string, cfg *config.ConfigParams) (string, error)
 	signedToken, err := jwtToken.SignedString([]byte(cfg.SECRETKEY))
 	if err != nil {
 		log.Printf("unable to generate jwt token for user %v, err: %v", email, err.Error())
+		return "", err
+	}
+
+	return signedToken, nil
+}
+
+func GeneratePNRToken(pnr, role string, cfg *config.ConfigParams) (string, error) {
+	expireTime := time.Now().Add(time.Minute * 20).Unix()
+	claims := &Claims{
+		Email: pnr,
+		Role:  role,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expireTime,
+			Subject:   pnr,
+			IssuedAt:  time.Now().Unix(),
+		},
+	}
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := jwtToken.SignedString([]byte(cfg.SECRETKEY))
+	if err != nil {
+		log.Printf("unable to generate jwt token for PNR %v, err: %v", pnr, err.Error())
 		return "", err
 	}
 

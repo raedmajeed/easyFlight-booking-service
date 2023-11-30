@@ -17,4 +17,12 @@ type BookingService interface {
 	UserLogin(p *pb.LoginRequest) (string, error)
 	RegisterUserSvc(p *pb.UserRequest) (*dom.UserData, error)
 	VerifyUserRequest(p *pb.OTPRequest) (*dom.UserData, error)
+
+	ConfirmedUserLogin(ctx context.Context, p *pb.PNRLoginRequest) (*pb.PNRLoginResponse, error)
+	SelectSeat(context.Context, *pb.SeatSelectRequest) (*pb.SeatSelectResponse, error)
+
+	ConfirmBooking(context.Context, *pb.ConfirmBookingRequest) (*pb.ConfirmBookingResponse, error)
+	OnlinePayment(context.Context, *pb.OnlinePaymentRequest) (*pb.OnlinePaymentResponse, error)
+	PaymentConfirmed(context.Context, *pb.PaymentConfirmedRequest) (*pb.PaymentConfirmedResponse, error)
+	CheckAndSendBookingReminder()
 }

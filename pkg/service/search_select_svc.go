@@ -10,6 +10,7 @@ import (
 	"github.com/raedmajeed/booking-service/pkg/utils"
 	"github.com/segmentio/kafka-go"
 	"log"
+	"time"
 )
 
 type SelectRequest struct {
@@ -48,13 +49,16 @@ func (svc *BookingServiceStruct) SearchSelect(ctx context.Context, request *pb.S
 		log.Println("error marshalling json SearchSelect() - search_select_svc 1")
 		return nil, err
 	}
-	fmt.Println(selectReq)
-	err = svc.kf.SearchSelectWriter.WriteMessages(ctx, kafka.Message{
+	err = svc.kf.SearchSelectWriter.WriteMessages(context.Background(), kafka.Message{
 		Value: marshal,
 	})
-	// right now I am here, delete this after debug
-
+	if err != nil {
+		log.Println("failed to write message to kafka from booking service to admin service")
+		return nil, err
+	}
+	fmt.Println("waiting for message from admin service")
 	message := svc.kf2.SearchSelectReaderMethod(ctx)
+
 	msg := message.Value
 	err = json.Unmarshal(msg, &completeFacilities)
 	if err != nil {
@@ -65,17 +69,23 @@ func (svc *BookingServiceStruct) SearchSelect(ctx context.Context, request *pb.S
 	if completeFacilities.DirectFlight.FlightPath.PathId < 0 {
 		return nil, errors.New("unable to fetch the flight details")
 	}
-	response := ConvertToResponse(completeFacilities)
+
+	response := ConvertToResponse(completeFacilities, claims.Economy)
+	svc.redis.Set(ctx, token+"1", message.Value, time.Minute*10)
 	return response, nil
 }
 
-func ConvertToResponse(cf dom.CompleteFlightFacilities) *pb.SearchSelectResponse {
+func ConvertToResponse(cf dom.CompleteFlightFacilities, economy bool) *pb.SearchSelectResponse {
 	directFlight := cf.DirectFlight
 	returnFlight := cf.ReturnFlight
 	var fd1 []*pb.FlightDetails
 	var fd2 []*pb.FlightDetails
 
 	for _, f := range directFlight.FlightPath.Flights {
+		fare := f.EconomyFare
+		if !economy {
+			fare = f.BusinessFare
+		}
 		fd1 = append(fd1, &pb.FlightDetails{
 			FlightNumber:     f.FlightNumber,
 			Airline:          f.Airline,
@@ -85,6 +95,7 @@ func ConvertToResponse(cf dom.CompleteFlightFacilities) *pb.SearchSelectResponse
 			ArrivalAirport:   f.ArrivalAirport,
 			ArrivalDate:      f.ArrivalDate,
 			ArrivalTime:      f.ArrivalTime,
+			FlightFare:       float32(fare),
 		})
 	}
 
@@ -120,6 +131,10 @@ func ConvertToResponse(cf dom.CompleteFlightFacilities) *pb.SearchSelectResponse
 
 	// Return Flight
 	for _, f := range returnFlight.FlightPath.Flights {
+		fare := f.EconomyFare
+		if !economy {
+			fare = f.BusinessFare
+		}
 		fd2 = append(fd2, &pb.FlightDetails{
 			FlightNumber:     f.FlightNumber,
 			Airline:          f.Airline,
@@ -129,6 +144,7 @@ func ConvertToResponse(cf dom.CompleteFlightFacilities) *pb.SearchSelectResponse
 			ArrivalAirport:   f.ArrivalAirport,
 			ArrivalDate:      f.ArrivalDate,
 			ArrivalTime:      f.ArrivalTime,
+			FlightFare:       float32(fare),
 		})
 	}
 	ca := returnFlight.Cancellation
@@ -153,7 +169,7 @@ func ConvertToResponse(cf dom.CompleteFlightFacilities) *pb.SearchSelectResponse
 	sd2 := &pb.SearchFlightDetails{
 		PathId:        int32(returnFlight.FlightPath.PathId),
 		NumberOfStops: int32(returnFlight.FlightPath.NumberOfStops),
-		FlightSegment: fd1,
+		FlightSegment: fd2,
 	}
 	rf := &pb.Facilities{
 		Cancellation: c2,

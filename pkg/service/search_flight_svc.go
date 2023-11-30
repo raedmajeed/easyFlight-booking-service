@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/go-redis/redis/v8"
 	dom "github.com/raedmajeed/booking-service/pkg/DOM"
 	pb "github.com/raedmajeed/booking-service/pkg/pb"
@@ -14,53 +16,16 @@ import (
 )
 
 func (svc *BookingServiceStruct) SearchFlight(ctx context.Context, request *pb.SearchFlightRequest) (*pb.SearchFlightResponse, error) {
-	//defer group.Done()/
-	//messageChan := make(chan kafka.Message)
-	//svc.kf2.SearchReaderMethod(ctx, group, messageChan)
-	economy := true
-	if request.Type == "1" {
-		economy = false
-	}
-	returnType := false
-	if request.ReturnDate != "" {
-		returnType = true
-	}
-	searchDetails := dom.SearchDetails{
-		DepartureAirport:    request.FromAirport,
-		ArrivalAirport:      request.ToAirport,
-		DepartureDate:       request.DepartDate,
-		ReturnDepartureDate: request.ReturnDate,
-		ReturnFlight:        returnType,
-		MaxStops:            request.MaxStops,
-		Economy:             economy,
-	}
-
-	byteSearchData, err := json.Marshal(&searchDetails)
-	if err != nil {
-		log.Println("error marshaling data")
-		return nil, err
-	}
-
-	var message kafka.Message
-	err = svc.kf.SearchWriter.WriteMessages(ctx,
-		kafka.Message{
-			Value: byteSearchData,
-		})
-	if err != nil {
-		log.Println("error writing to kafka: ", err.Error())
-		return nil, err
-	}
-
-	message = svc.kf2.SearchReaderMethod(ctx)
-	if message.Value == nil {
-		log.Println("nothing in kafka message")
-		return nil, err
-	}
+	economy := cabinClass(request.Type)
+	returnType := returnStatus(request.Type)
+	byteSearchData, err := marshalSearch(request, returnType, economy)
+	err = writingToKafka(ctx, byteSearchData, svc)
+	message, err := readingFromKafka(ctx, svc)
 
 	var paths dom.KafkaPaths
 	err = json.Unmarshal(message.Value, &paths)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error unmarshaling SearchFlight(), err: %v", err.Error())
 	}
 
 	adults, _ := strconv.Atoi(request.Adults)
@@ -73,8 +38,9 @@ func (svc *BookingServiceStruct) SearchFlight(ctx context.Context, request *pb.S
 	}
 
 	token, err := utils.GenerateSearchToken(&info, svc.cfg)
-	ToFlight := ConvertToSearchResponse(paths.DirectPath)
-	returnFlights := ConvertToSearchResponse(paths.ReturnPath)
+	ToFlight := ConvertToSearchResponse(paths.DirectPath, economy)
+	returnFlights := ConvertToSearchResponse(paths.ReturnPath, economy)
+
 	searchFlightResponse := &pb.SearchFlightResponse{
 		TotalDirectFlights: int32(len(ToFlight)),
 		TotalReturnFlights: int32(len(returnFlights)),
@@ -99,13 +65,17 @@ func AddToRedis(redis *redis.Client, token string, message []byte, ctx context.C
 	return nil
 }
 
-func ConvertToSearchResponse(paths []dom.Path) []*pb.SearchFlightDetails {
+func ConvertToSearchResponse(paths []dom.Path, economy bool) []*pb.SearchFlightDetails {
 	var flightDetails []*pb.FlightDetails
 	var flightPaths []*pb.SearchFlightDetails
 
 	for _, path := range paths {
 		flightDetails = []*pb.FlightDetails{}
 		for _, f := range path.Flights {
+			fare := f.EconomyFare
+			if !economy {
+				fare = f.BusinessFare
+			}
 			flightDetail := pb.FlightDetails{
 				FlightNumber:     f.FlightNumber,
 				Airline:          f.Airline,
@@ -115,6 +85,7 @@ func ConvertToSearchResponse(paths []dom.Path) []*pb.SearchFlightDetails {
 				ArrivalAirport:   f.ArrivalAirport,
 				ArrivalDate:      f.ArrivalDate,
 				ArrivalTime:      f.ArrivalTime,
+				FlightFare:       float32(fare),
 			}
 			flightDetails = append(flightDetails, &flightDetail)
 		}
@@ -125,4 +96,59 @@ func ConvertToSearchResponse(paths []dom.Path) []*pb.SearchFlightDetails {
 		})
 	}
 	return flightPaths
+}
+
+func cabinClass(economyCheck string) bool {
+	economy := true
+	if economyCheck == "1" {
+		economy = false
+	}
+	return economy
+}
+
+func returnStatus(returnVal string) bool {
+	returnType := false
+	if returnVal != "" {
+		returnType = true
+	}
+	return returnType
+}
+
+func readingFromKafka(ctx context.Context, svc *BookingServiceStruct) (kafka.Message, error) {
+	var message kafka.Message
+	message = svc.kf2.SearchReaderMethod(ctx)
+	if message.Value == nil {
+		return kafka.Message{}, errors.New("message read from kafka is empty readingFromKafka()")
+	}
+	return message, nil
+}
+
+func writingToKafka(ctx context.Context, byteSearchData []byte, svc *BookingServiceStruct) error {
+	err := svc.kf.SearchWriter.WriteMessages(ctx,
+		kafka.Message{
+			Value: byteSearchData,
+		})
+	if err != nil {
+		return fmt.Errorf("error writing to kafka in writingToKafka() err: %v", err.Error())
+	}
+	return err
+}
+
+func marshalSearch(request *pb.SearchFlightRequest, returnType bool, economy bool) ([]byte, error) {
+	searchDetails := dom.SearchDetails{
+		DepartureAirport:    request.FromAirport,
+		ArrivalAirport:      request.ToAirport,
+		DepartureDate:       request.DepartDate,
+		ReturnDepartureDate: request.ReturnDate,
+		ReturnFlight:        returnType,
+		MaxStops:            request.MaxStops,
+		Economy:             economy,
+	}
+
+	// marshaling and sending the search details to admin-service
+	byteSearchData, err := json.Marshal(&searchDetails)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling json in marshalSearch(), err: %v", err.Error())
+	}
+	return byteSearchData, nil
 }

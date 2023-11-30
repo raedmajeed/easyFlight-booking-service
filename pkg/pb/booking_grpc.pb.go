@@ -28,6 +28,13 @@ type BookingClient interface {
 	RegisterLoginRequest(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	RegisterUser(ctx context.Context, in *UserRequest, opts ...grpc.CallOption) (*UserResponse, error)
 	VerifyUser(ctx context.Context, in *OTPRequest, opts ...grpc.CallOption) (*UserResponse, error)
+	// rpc calls for confirmed booking users
+	RegisterPNRLogin(ctx context.Context, in *PNRLoginRequest, opts ...grpc.CallOption) (*PNRLoginResponse, error)
+	RegisterSelectSeat(ctx context.Context, in *SeatSelectRequest, opts ...grpc.CallOption) (*SeatSelectResponse, error)
+	// rpc calls for booking
+	RegisterConfirmBooking(ctx context.Context, in *ConfirmBookingRequest, opts ...grpc.CallOption) (*ConfirmBookingResponse, error)
+	RegisterOnlinePayment(ctx context.Context, in *OnlinePaymentRequest, opts ...grpc.CallOption) (*OnlinePaymentResponse, error)
+	ResisterPaymentConfirmed(ctx context.Context, in *PaymentConfirmedRequest, opts ...grpc.CallOption) (*PaymentConfirmedResponse, error)
 }
 
 type bookingClient struct {
@@ -92,6 +99,51 @@ func (c *bookingClient) VerifyUser(ctx context.Context, in *OTPRequest, opts ...
 	return out, nil
 }
 
+func (c *bookingClient) RegisterPNRLogin(ctx context.Context, in *PNRLoginRequest, opts ...grpc.CallOption) (*PNRLoginResponse, error) {
+	out := new(PNRLoginResponse)
+	err := c.cc.Invoke(ctx, "/Booking/RegisterPNRLogin", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bookingClient) RegisterSelectSeat(ctx context.Context, in *SeatSelectRequest, opts ...grpc.CallOption) (*SeatSelectResponse, error) {
+	out := new(SeatSelectResponse)
+	err := c.cc.Invoke(ctx, "/Booking/RegisterSelectSeat", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bookingClient) RegisterConfirmBooking(ctx context.Context, in *ConfirmBookingRequest, opts ...grpc.CallOption) (*ConfirmBookingResponse, error) {
+	out := new(ConfirmBookingResponse)
+	err := c.cc.Invoke(ctx, "/Booking/RegisterConfirmBooking", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bookingClient) RegisterOnlinePayment(ctx context.Context, in *OnlinePaymentRequest, opts ...grpc.CallOption) (*OnlinePaymentResponse, error) {
+	out := new(OnlinePaymentResponse)
+	err := c.cc.Invoke(ctx, "/Booking/RegisterOnlinePayment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bookingClient) ResisterPaymentConfirmed(ctx context.Context, in *PaymentConfirmedRequest, opts ...grpc.CallOption) (*PaymentConfirmedResponse, error) {
+	out := new(PaymentConfirmedResponse)
+	err := c.cc.Invoke(ctx, "/Booking/ResisterPaymentConfirmed", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BookingServer is the server API for Booking service.
 // All implementations must embed UnimplementedBookingServer
 // for forward compatibility
@@ -102,6 +154,13 @@ type BookingServer interface {
 	RegisterLoginRequest(context.Context, *LoginRequest) (*LoginResponse, error)
 	RegisterUser(context.Context, *UserRequest) (*UserResponse, error)
 	VerifyUser(context.Context, *OTPRequest) (*UserResponse, error)
+	// rpc calls for confirmed booking users
+	RegisterPNRLogin(context.Context, *PNRLoginRequest) (*PNRLoginResponse, error)
+	RegisterSelectSeat(context.Context, *SeatSelectRequest) (*SeatSelectResponse, error)
+	// rpc calls for booking
+	RegisterConfirmBooking(context.Context, *ConfirmBookingRequest) (*ConfirmBookingResponse, error)
+	RegisterOnlinePayment(context.Context, *OnlinePaymentRequest) (*OnlinePaymentResponse, error)
+	ResisterPaymentConfirmed(context.Context, *PaymentConfirmedRequest) (*PaymentConfirmedResponse, error)
 	mustEmbedUnimplementedBookingServer()
 }
 
@@ -126,6 +185,21 @@ func (UnimplementedBookingServer) RegisterUser(context.Context, *UserRequest) (*
 }
 func (UnimplementedBookingServer) VerifyUser(context.Context, *OTPRequest) (*UserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyUser not implemented")
+}
+func (UnimplementedBookingServer) RegisterPNRLogin(context.Context, *PNRLoginRequest) (*PNRLoginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterPNRLogin not implemented")
+}
+func (UnimplementedBookingServer) RegisterSelectSeat(context.Context, *SeatSelectRequest) (*SeatSelectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterSelectSeat not implemented")
+}
+func (UnimplementedBookingServer) RegisterConfirmBooking(context.Context, *ConfirmBookingRequest) (*ConfirmBookingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterConfirmBooking not implemented")
+}
+func (UnimplementedBookingServer) RegisterOnlinePayment(context.Context, *OnlinePaymentRequest) (*OnlinePaymentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterOnlinePayment not implemented")
+}
+func (UnimplementedBookingServer) ResisterPaymentConfirmed(context.Context, *PaymentConfirmedRequest) (*PaymentConfirmedResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResisterPaymentConfirmed not implemented")
 }
 func (UnimplementedBookingServer) mustEmbedUnimplementedBookingServer() {}
 
@@ -248,6 +322,96 @@ func _Booking_VerifyUser_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Booking_RegisterPNRLogin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PNRLoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookingServer).RegisterPNRLogin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Booking/RegisterPNRLogin",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookingServer).RegisterPNRLogin(ctx, req.(*PNRLoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Booking_RegisterSelectSeat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SeatSelectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookingServer).RegisterSelectSeat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Booking/RegisterSelectSeat",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookingServer).RegisterSelectSeat(ctx, req.(*SeatSelectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Booking_RegisterConfirmBooking_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfirmBookingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookingServer).RegisterConfirmBooking(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Booking/RegisterConfirmBooking",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookingServer).RegisterConfirmBooking(ctx, req.(*ConfirmBookingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Booking_RegisterOnlinePayment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OnlinePaymentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookingServer).RegisterOnlinePayment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Booking/RegisterOnlinePayment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookingServer).RegisterOnlinePayment(ctx, req.(*OnlinePaymentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Booking_ResisterPaymentConfirmed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PaymentConfirmedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BookingServer).ResisterPaymentConfirmed(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Booking/ResisterPaymentConfirmed",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BookingServer).ResisterPaymentConfirmed(ctx, req.(*PaymentConfirmedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Booking_ServiceDesc is the grpc.ServiceDesc for Booking service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -278,6 +442,26 @@ var Booking_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "VerifyUser",
 			Handler:    _Booking_VerifyUser_Handler,
+		},
+		{
+			MethodName: "RegisterPNRLogin",
+			Handler:    _Booking_RegisterPNRLogin_Handler,
+		},
+		{
+			MethodName: "RegisterSelectSeat",
+			Handler:    _Booking_RegisterSelectSeat_Handler,
+		},
+		{
+			MethodName: "RegisterConfirmBooking",
+			Handler:    _Booking_RegisterConfirmBooking_Handler,
+		},
+		{
+			MethodName: "RegisterOnlinePayment",
+			Handler:    _Booking_RegisterOnlinePayment_Handler,
+		},
+		{
+			MethodName: "ResisterPaymentConfirmed",
+			Handler:    _Booking_ResisterPaymentConfirmed_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

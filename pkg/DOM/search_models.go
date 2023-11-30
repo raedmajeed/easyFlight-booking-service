@@ -26,6 +26,8 @@ type FlightDetails struct {
 	ArrivalTime       string    `column:"arr_time"`
 	DepartureDateTime time.Time `column:"dep_datetime"`
 	ArrivalDateTime   time.Time `column:"arr_datetime"`
+	EconomyFare       float64
+	BusinessFare      float64
 }
 
 type Path struct {
@@ -36,8 +38,10 @@ type Path struct {
 }
 
 type KafkaPaths struct {
-	DirectPath []Path
-	ReturnPath []Path
+	DirectPath       []Path
+	ReturnPath       []Path
+	DepartureAirport string
+	ArrivalAirport   string
 }
 
 type AdditionalInfo struct {

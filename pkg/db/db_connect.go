@@ -23,7 +23,7 @@ func NewDBConnect(cfg *config.ConfigParams) (*gorm.DB, error) {
 	}
 
 	// MIGRATING DB
-	err = database.AutoMigrate(&DOM.UserData{}, &DOM.Booking{}, &DOM.Traveller{})
+	err = database.AutoMigrate(&DOM.UserData{}, &DOM.Booking{})
 
 	if err != nil {
 		log.Printf("unable to migrate db, err: %v", err)

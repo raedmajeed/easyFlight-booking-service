@@ -8,6 +8,7 @@ require (
 	github.com/go-playground/validator/v10 v10.16.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.3.0
+	github.com/razorpay/razorpay-go v1.2.0
 	github.com/segmentio/kafka-go v0.4.45
 	github.com/spf13/viper v1.17.0
 	github.com/twilio/twilio-go v1.15.2

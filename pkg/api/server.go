@@ -13,33 +13,20 @@ import (
 )
 
 type Server struct {
-	E   *gin.Engine
-	cfg *config.ConfigParams
-	svc interfaces.BookingService
+	E      *gin.Engine
+	cfg    *config.ConfigParams
+	svc    interfaces.BookingService
+	client pb.AdminServiceClient
 }
 
-func NewServer(cfg *config.ConfigParams, handler *handlers.BookingHandler, svc interfaces.BookingService) (*Server, error) {
-	//newCont, cancel := context.WithCancel(context.Background())
-	//defer cancel()
-
-	//kf := config.NewKafkaReaderConnect(svc)
-	//go kf.SearchReaderMethod(newCont)
+func NewServer(cfg *config.ConfigParams, handler *handlers.BookingHandler, svc interfaces.BookingService) {
 	err := NewGrpcServer(cfg, handler)
-
 	if err != nil {
 		log.Println("error connecting to gRPC server")
-		return nil, err
 	}
-	r := gin.Default()
-	return &Server{
-		E:   r,
-		cfg: cfg,
-		svc: svc,
-	}, nil
 }
 
 func NewGrpcServer(cfg *config.ConfigParams, handler *handlers.BookingHandler) error {
-	log.Println("connecting to gRPC server")
 	addr := fmt.Sprintf(":%s", cfg.BSERVICEPORT)
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {

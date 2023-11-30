@@ -6,12 +6,15 @@ type CompleteFlightFacilities struct {
 	NumberOfAdults   int
 	NumberOfChildren int
 	CabinClass       string
+	DepartureAirport string
+	ArrivalAirport   string
 }
 
 type FlightFacilities struct {
 	Cancellation Cancellation
 	Baggage      Baggage
 	FlightPath   Path
+	Fare         float64
 }
 
 type Cancellation struct {
