@@ -7,8 +7,8 @@ type Booking struct {
 	PNR              string `gorm:"unique"`
 	Email            string
 	Economy          bool
-	PaymentId        string `gorm:"unique"`
-	BookingReference string `gorm:"unique;not null"`
+	PaymentId        string `gorm:""`
+	BookingReference string `gorm:"uniques;not null"`
 	BookingStatus    string `gorm:"default:PENDING"`
 	DepartureAirport string
 	ArrivalAirport   string

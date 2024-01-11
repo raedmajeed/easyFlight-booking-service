@@ -37,6 +37,10 @@ func (svc *BookingServiceStruct) SearchFlight(ctx context.Context, request *pb.S
 		Economy:       economy,
 	}
 
+	if len(paths.DirectPath) == 0 {
+		return nil, fmt.Errorf("error fetching flight details from admin service")
+	}
+
 	token, err := utils.GenerateSearchToken(&info, svc.cfg)
 	ToFlight := ConvertToSearchResponse(paths.DirectPath, economy)
 	returnFlights := ConvertToSearchResponse(paths.ReturnPath, economy)
@@ -115,6 +119,7 @@ func returnStatus(returnVal string) bool {
 }
 
 func readingFromKafka(ctx context.Context, svc *BookingServiceStruct) (kafka.Message, error) {
+	log.Println("reading from kafka")
 	var message kafka.Message
 	message = svc.kf2.SearchReaderMethod(ctx)
 	if message.Value == nil {

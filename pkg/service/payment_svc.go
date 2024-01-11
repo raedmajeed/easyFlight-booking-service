@@ -4,58 +4,60 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	dom "github.com/raedmajeed/booking-service/pkg/DOM"
 	pb "github.com/raedmajeed/booking-service/pkg/pb"
 	razorpay "github.com/razorpay/razorpay-go"
 	"log"
 )
 
-func (svc *BookingServiceStruct) OnlinePayment(ctx *gin.Context, request *pb.OnlinePaymentRequest) (*pb.OnlinePaymentResponse, error) {
+func (svc *BookingServiceStruct) OnlinePayment(ctx context.Context, request *pb.OnlinePaymentRequest) (*pb.OnlinePaymentResponse, error) {
 	var flightDetails dom.CompleteFlightFacilities
 	email := request.Email
 	bookingReference := request.BookingReference
-	val := svc.redis.Get(ctx, bookingReference).Val()
+	val := svc.redis.Get(ctx, request.Token+"1").Val()
+	err := json.Unmarshal([]byte(val), &flightDetails)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling json err: %v", err.Error())
+	}
+
 	bookingDetails, err := svc.repo.FindBooking(email, bookingReference)
 	if err != nil {
 		return nil, fmt.Errorf("error finding booking details for user %v", email)
 	}
 
-	err = json.Unmarshal([]byte(val), &flightDetails)
-	if err != nil {
-		return nil, err
-	}
-
 	client := razorpay.NewClient(svc.cfg.RAZORPAYKEYID, svc.cfg.RAZORPAYSECRETKEY)
 	directAmount := flightDetails.DirectFlight.Fare
 	returnAmount := flightDetails.ReturnFlight.Fare
-	fare := directAmount + returnAmount
+	fare := int(directAmount) + int(returnAmount)
 
 	noOfTravellers := flightDetails.NumberOfAdults + flightDetails.NumberOfChildren
-	totalFare := fare * float64(noOfTravellers)
+	totalFare := fare * noOfTravellers
+	amountInPaise := int(totalFare) * 100
 
 	data := map[string]interface{}{
-		"amount":   totalFare,
+		"amount":   amountInPaise,
 		"currency": "INR",
-		"receipt":  bookingReference,
+		"receipt":  "bookingReference",
 	}
+
 	body, err := client.Order.Create(data, nil)
 	if err != nil {
 		log.Println("error creating order, err: ", err.Error())
 		return nil, err
 	}
+
 	orderId := body["id"].(string)
-	type RazorpayDetails struct {
-		UserID           uint
-		TotalFare        float64
-		BookingReference string
-		Email            string
-		OrderID          string
-	}
+	//type RazorpayDetails struct {
+	//	UserID           uint
+	//	TotalFare        int
+	//	BookingReference string
+	//	Email            string
+	//	OrderID          string
+	//}
 
 	return &pb.OnlinePaymentResponse{
 		UserId:           int32(bookingDetails.UserId),
-		TotalFare:        float32(totalFare),
+		TotalFare:        int32(totalFare),
 		BookingReference: bookingReference,
 		Email:            email,
 		OrderId:          orderId,

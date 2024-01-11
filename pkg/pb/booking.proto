@@ -206,11 +206,12 @@ message DirectReturnFlight {
 message OnlinePaymentRequest {
   string booking_reference = 1;
   string email = 2;
+  string token = 3;
 }
 
 message OnlinePaymentResponse {
   int32 user_id = 1;
-  float total_fare = 2;
+  int32 total_fare = 2;
   string booking_reference = 3;
   string email = 4;
   string order_id = 5;

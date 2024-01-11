@@ -20,8 +20,7 @@ func (svc *BookingServiceStruct) AddTraveller(ctx context.Context, request *pb.T
 	}
 	_, err := utils.ValidateSearchToken(token, *svc.cfg)
 	if err != nil {
-		log.Printf("there is error in AddTraveller() method, err: %v", err.Error())
-		return nil, err
+		return nil, fmt.Errorf("\"there is error in AddTraveller() method, err: %v", err.Error())
 	}
 	user, err := svc.repo.FindUserByEmail(request.Email)
 	var cf dom.CompleteFlightFacilities
@@ -41,7 +40,6 @@ func (svc *BookingServiceStruct) AddTraveller(ctx context.Context, request *pb.T
 		}
 		travellers = append(travellers, traveller)
 	}
-
 	booking := dom.Booking{
 		BookingReference: bookingRefID,
 		BookingStatus:    "PENDING",
@@ -50,6 +48,7 @@ func (svc *BookingServiceStruct) AddTraveller(ctx context.Context, request *pb.T
 		PNR:              generatePNR(bookingRefID),
 		DepartureAirport: cf.DepartureAirport,
 		ArrivalAirport:   cf.ArrivalAirport,
+		Email:            request.Email,
 	}
 	if err := svc.repo.CreateBookedTravellers(&booking); err != nil {
 		log.Printf("failed to create bookedTravellers: %v", err)

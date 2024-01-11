@@ -22,7 +22,7 @@ func (handler *BookingHandler) RegisterLoginRequest(ctx context.Context, p *pb.L
 		return nil, err
 	}
 	if token == "" {
-		log.Printf("Unable to login %v of email ++ %v, err: %v", p.Role, p.Email, err.Error())
+		log.Printf("Unable to login %v of email + %v, err: %v", p.Role, p.Email, err.Error())
 		return nil, err
 	}
 	return utils.ConvertLoginRequestToResponse(token, p), nil
@@ -37,7 +37,7 @@ func (handler *BookingHandler) RegisterUser(ctx context.Context, p *pb.UserReque
 
 	resp, err := handler.svc.RegisterUserSvc(p)
 	if err != nil {
-		log.Printf("Unable to register %v of email == %v, err: %v", p.Email, err.Error())
+		log.Printf("Unable to register of email == %v, err: %v", p.Email, err.Error())
 		return nil, err
 	}
 	return &pb.UserResponse{

@@ -31,7 +31,7 @@ func (svc *BookingServiceStruct) UserLogin(p *pb.LoginRequest) (string, error) {
 		return "", fmt.Errorf("password mismatch for user %v", p.Email)
 	}
 
-	token, err := utils.GenerateToken(p.Email, p.Role, svc.cfg)
+	token, err := utils.GenerateToken(p.Email, "user", svc.cfg)
 	if err != nil {
 		log.Printf("unable to generate token for user %v, err: %v", p.Email, err.Error())
 		return "", err

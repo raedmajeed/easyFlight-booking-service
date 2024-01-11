@@ -23,6 +23,7 @@ func NewKafkaReaderConnect() *KafkaReader2 {
 		Topic:   "selected-flight-response-2",
 		GroupID: "flight-response-2",
 	})
+
 	return &KafkaReader2{
 		SearchReader:       searchReader,
 		SearchSelectReader: searchSelectReader,
