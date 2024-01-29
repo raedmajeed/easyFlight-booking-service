@@ -22,8 +22,9 @@ func (svc *BookingServiceStruct) AddTraveller(ctx context.Context, request *pb.T
 	if err != nil {
 		return nil, fmt.Errorf("\"there is error in AddTraveller() method, err: %v", err.Error())
 	}
+
 	user, err := svc.repo.FindUserByEmail(request.Email)
-	var cf dom.CompleteFlightFacilities
+	var cf pb.SearchSelectResponse
 	val := svc.redis.Get(ctx, token+"1")
 	if err := json.Unmarshal([]byte(val.Val()), &cf); err != nil {
 		return nil, err
@@ -40,14 +41,22 @@ func (svc *BookingServiceStruct) AddTraveller(ctx context.Context, request *pb.T
 		}
 		travellers = append(travellers, traveller)
 	}
+
+	var dep string
+	var arr string
+	if len(cf.DirectFlight.FlightPath.FlightSegment) > 0 {
+		dep = cf.DirectFlight.FlightPath.FlightSegment[0].DepartureAirport
+		arr = cf.DirectFlight.FlightPath.FlightSegment[0].ArrivalAirport
+	}
+
 	booking := dom.Booking{
 		BookingReference: bookingRefID,
 		BookingStatus:    "PENDING",
 		UserId:           user.ID,
 		Bookings:         travellers,
 		PNR:              generatePNR(bookingRefID),
-		DepartureAirport: cf.DepartureAirport,
-		ArrivalAirport:   cf.ArrivalAirport,
+		DepartureAirport: dep,
+		ArrivalAirport:   arr,
 		Email:            request.Email,
 	}
 	if err := svc.repo.CreateBookedTravellers(&booking); err != nil {

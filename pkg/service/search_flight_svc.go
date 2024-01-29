@@ -15,18 +15,38 @@ import (
 	"time"
 )
 
+// SearchFlight method is used to search flights in the routes
+// as per user defined, also it checks if the flight is direct or indirect
+// and generates a SearchToken which is required for subsequent requests
 func (svc *BookingServiceStruct) SearchFlight(ctx context.Context, request *pb.SearchFlightRequest) (*pb.SearchFlightResponse, error) {
+	newContext, cancel := context.WithTimeout(ctx, time.Second*10000)
+	defer cancel()
+
 	economy := cabinClass(request.Type)
 	returnType := returnStatus(request.Type)
-	byteSearchData, err := marshalSearch(request, returnType, economy)
-	err = writingToKafka(ctx, byteSearchData, svc)
-	message, err := readingFromKafka(ctx, svc)
-
-	var paths dom.KafkaPaths
-	err = json.Unmarshal(message.Value, &paths)
+	// don't need this
+	resp, err := svc.client.RegisterSearchFlight(newContext, &pb.SearchFlightRequestAdmin{
+		DepartureAirport:    request.FromAirport,
+		ArrivalAirport:      request.ToAirport,
+		DepartureDate:       request.DepartDate,
+		ReturnDepartureDate: request.ReturnDate,
+		ReturnFlight:        returnType,
+		MaxStops:            request.MaxStops,
+		Economy:             economy,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling SearchFlight(), err: %v", err.Error())
+		return nil, err
 	}
+
+	//byteSearchData, err := marshalSearch(request, returnType, economy)
+	//err = writingToKafka(newContext, byteSearchData, svc)
+	//message, err := readingFromKafka(newContext, svc)
+
+	//var paths dom.KafkaPaths
+	//err = json.Unmarshal(message.Value, &paths)
+	//if err != nil {
+	//	return nil, fmt.Errorf("error unmarshaling SearchFlight(), err: %v", err.Error())
+	//}
 
 	adults, _ := strconv.Atoi(request.Adults)
 	children, _ := strconv.Atoi(request.Children)
@@ -37,13 +57,13 @@ func (svc *BookingServiceStruct) SearchFlight(ctx context.Context, request *pb.S
 		Economy:       economy,
 	}
 
-	if len(paths.DirectPath) == 0 {
+	if len(resp.DirectPath) == 0 {
 		return nil, fmt.Errorf("error fetching flight details from admin service")
 	}
 
 	token, err := utils.GenerateSearchToken(&info, svc.cfg)
-	ToFlight := ConvertToSearchResponse(paths.DirectPath, economy)
-	returnFlights := ConvertToSearchResponse(paths.ReturnPath, economy)
+	ToFlight := ConvertToSearchResponse(resp.DirectPath, economy)
+	returnFlights := ConvertToSearchResponse(resp.ReturnPath, economy)
 
 	searchFlightResponse := &pb.SearchFlightResponse{
 		TotalDirectFlights: int32(len(ToFlight)),
@@ -53,9 +73,10 @@ func (svc *BookingServiceStruct) SearchFlight(ctx context.Context, request *pb.S
 		SearchToken:        token,
 	}
 
-	err = AddToRedis(svc.redis, token, message.Value, ctx)
+	marshal, err := json.Marshal(&searchFlightResponse)
+
+	err = AddToRedis(svc.redis, token, marshal, ctx)
 	if err != nil {
-		log.Println("unable to push values to redis err:", err.Error())
 		return nil, err
 	}
 	return searchFlightResponse, nil
@@ -69,18 +90,18 @@ func AddToRedis(redis *redis.Client, token string, message []byte, ctx context.C
 	return nil
 }
 
-func ConvertToSearchResponse(paths []dom.Path, economy bool) []*pb.SearchFlightDetails {
-	var flightDetails []*pb.FlightDetails
-	var flightPaths []*pb.SearchFlightDetails
+func ConvertToSearchResponse(paths []*pb.Path, economy bool) []*pb.SearchFlightDetail {
+	var flightDetails []*pb.FlightDetail
+	var flightPaths []*pb.SearchFlightDetail
 
 	for _, path := range paths {
-		flightDetails = []*pb.FlightDetails{}
+		flightDetails = []*pb.FlightDetail{}
 		for _, f := range path.Flights {
 			fare := f.EconomyFare
 			if !economy {
 				fare = f.BusinessFare
 			}
-			flightDetail := pb.FlightDetails{
+			flightDetail := pb.FlightDetail{
 				FlightNumber:     f.FlightNumber,
 				Airline:          f.Airline,
 				DepartureAirport: f.DepartureAirport,
@@ -90,10 +111,11 @@ func ConvertToSearchResponse(paths []dom.Path, economy bool) []*pb.SearchFlightD
 				ArrivalDate:      f.ArrivalDate,
 				ArrivalTime:      f.ArrivalTime,
 				FlightFare:       float32(fare),
+				FlightChartId:    f.FlightChartId,
 			}
 			flightDetails = append(flightDetails, &flightDetail)
 		}
-		flightPaths = append(flightPaths, &pb.SearchFlightDetails{
+		flightPaths = append(flightPaths, &pb.SearchFlightDetail{
 			PathId:        int32(path.PathId),
 			NumberOfStops: int32(path.NumberOfStops - 1),
 			FlightSegment: flightDetails,
@@ -119,8 +141,9 @@ func returnStatus(returnVal string) bool {
 }
 
 func readingFromKafka(ctx context.Context, svc *BookingServiceStruct) (kafka.Message, error) {
-	log.Println("reading from kafka")
+	log.Println("waiting for search details from Airline Service")
 	var message kafka.Message
+
 	message = svc.kf2.SearchReaderMethod(ctx)
 	if message.Value == nil {
 		return kafka.Message{}, errors.New("message read from kafka is empty readingFromKafka()")
@@ -129,6 +152,7 @@ func readingFromKafka(ctx context.Context, svc *BookingServiceStruct) (kafka.Mes
 }
 
 func writingToKafka(ctx context.Context, byteSearchData []byte, svc *BookingServiceStruct) error {
+	log.Printf("writing message to kakfa -> message: %v", string(byteSearchData))
 	err := svc.kf.SearchWriter.WriteMessages(ctx,
 		kafka.Message{
 			Value: byteSearchData,

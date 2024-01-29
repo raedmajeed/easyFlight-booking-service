@@ -11,10 +11,10 @@ import (
 )
 
 func (svc *BookingServiceStruct) OnlinePayment(ctx context.Context, request *pb.OnlinePaymentRequest) (*pb.OnlinePaymentResponse, error) {
-	var flightDetails dom.CompleteFlightFacilities
+	var flightDetails pb.ConfirmBookingResponse
 	email := request.Email
 	bookingReference := request.BookingReference
-	val := svc.redis.Get(ctx, request.Token+"1").Val()
+	val := svc.redis.Get(ctx, bookingReference).Val()
 	err := json.Unmarshal([]byte(val), &flightDetails)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling json err: %v", err.Error())
@@ -26,13 +26,10 @@ func (svc *BookingServiceStruct) OnlinePayment(ctx context.Context, request *pb.
 	}
 
 	client := razorpay.NewClient(svc.cfg.RAZORPAYKEYID, svc.cfg.RAZORPAYSECRETKEY)
-	directAmount := flightDetails.DirectFlight.Fare
-	returnAmount := flightDetails.ReturnFlight.Fare
+	directAmount := flightDetails.DirectFlightFare
+	returnAmount := flightDetails.ReturnFlightFare
 	fare := int(directAmount) + int(returnAmount)
-
-	noOfTravellers := flightDetails.NumberOfAdults + flightDetails.NumberOfChildren
-	totalFare := fare * noOfTravellers
-	amountInPaise := int(totalFare) * 100
+	amountInPaise := int(fare) * 100
 
 	data := map[string]interface{}{
 		"amount":   amountInPaise,
@@ -57,7 +54,7 @@ func (svc *BookingServiceStruct) OnlinePayment(ctx context.Context, request *pb.
 
 	return &pb.OnlinePaymentResponse{
 		UserId:           int32(bookingDetails.UserId),
-		TotalFare:        int32(totalFare),
+		TotalFare:        int32(fare),
 		BookingReference: bookingReference,
 		Email:            email,
 		OrderId:          orderId,
@@ -109,6 +106,7 @@ func (svc *BookingServiceStruct) PaymentConfirmed(ctx context.Context, request *
 
 	bookingDetails.BookingStatus = "CONFIRMED"
 	bookingDetails.PaymentId = request.PaymentId
+	//bookingDetails.FlightChartIDs =
 	err = svc.repo.UpdateBookings(bookingDetails)
 	if err != nil {
 		return nil, err

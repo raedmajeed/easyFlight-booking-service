@@ -31,28 +31,23 @@ func NewKafkaReaderConnect() *KafkaReader2 {
 }
 
 func (kf *KafkaReader2) SearchReaderMethod(ctx context.Context) kafka.Message {
-	//defer group.Done()
 	log.Println("kafka topic search-flight-response listening")
-	//go func() {
-	var message kafka.Message
-	for {
-		message, _ = kf.SearchReader.ReadMessage(ctx)
-		select {
-		case <-ctx.Done():
-			log.Println("context cancelled returning")
-			return kafka.Message{}
-		default:
-			log.Println("go the message yesss search!!!")
-			//err := kf.SearchReader.CommitMessages(ctx, message)
-			//if message.Value != nil {
-			//	log.Println("received message search reader method")
-			return message
-			//}
-			//break
+	ch := make(chan kafka.Message)
+	returnMsg := make(chan kafka.Message)
+	message, _ := kf.SearchReader.ReadMessage(ctx)
+	ch <- message
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				log.Println("context cancelled returning")
+				returnMsg <- kafka.Message{}
+			case msg := <-ch:
+				returnMsg <- msg
+			}
 		}
-	}
-	//}()
-	//return messageChan
+	}()
+	return <-returnMsg
 }
 
 func (kf *KafkaReader2) SearchSelectReaderMethod(ctx context.Context) kafka.Message {

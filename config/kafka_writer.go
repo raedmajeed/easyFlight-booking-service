@@ -18,12 +18,12 @@ func NewKafkaWriterConnect() *KafkaWriter {
 	}
 	searchWriter := &kafka.Writer{
 		Addr:                   kafka.TCP("localhost:9092"),
-		Topic:                  "search-flight-request-3",
+		Topic:                  "search-flight-bs-6",
 		AllowAutoTopicCreation: true,
 	}
 	searchSelectWriter := &kafka.Writer{
 		Addr:                   kafka.TCP("localhost:9092"),
-		Topic:                  "selected-flight-request-4",
+		Topic:                  "search-select-flight-bs-6",
 		AllowAutoTopicCreation: true,
 	}
 	return &KafkaWriter{

@@ -49,12 +49,12 @@ func NewGrpcServer(cfg *config.ConfigParams, handler *handlers.BookingHandler) e
 	return nil
 }
 
-func (s *Server) ServerStart() error {
-	err := s.E.Run(":" + s.cfg.PORT)
-	if err != nil {
-		log.Println("error starting server")
-		return err
-	}
-	log.Println("Server started")
-	return nil
-}
+//func (s *Server) ServerStart() error {
+//	err := s.E.Run(":" + s.cfg.PORT)
+//	if err != nil {
+//		log.Println("error starting server")
+//		return err
+//	}
+//	log.Println("Server started")
+//	return nil
+//}

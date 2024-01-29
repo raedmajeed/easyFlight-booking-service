@@ -5,9 +5,14 @@ package admin;
 
 option go_package = ".";
 
+import "google/protobuf/timestamp.proto";
+
 service AdminService {
   rpc RegisterSelectSeat(SeatRequest) returns (SeatResponse);
   rpc AddConfirmedSeats(ConfirmedSeatRequest) returns (ConfirmedSeatResponse);
+
+  rpc RegisterSearchFlight(SearchFlightRequestAdmin) returns (SearchFlightResponseAdmin);
+  rpc RegisterSelectFlight(SelectFlightAdmin) returns (CompleteFlightDetails);
 }
 
 message SeatRequest {
@@ -32,4 +37,125 @@ message ConfirmedSeatRequest {
 
 message ConfirmedSeatResponse {
 
+}
+
+message SearchFlightRequestAdmin {
+  string departure_airport = 1;
+  string arrival_airport = 2;
+  string departure_date = 3;
+  string return_departure_date = 4;
+  bool return_flight = 5;
+  string max_stops = 6;
+  bool economy = 7;
+}
+
+message FlightDetailsAdmin {
+  uint32 flight_chart_id = 1;
+  string flight_number = 2;
+  string airline = 3;
+  string departure_airport = 4; // Renamed from dep_airport
+  string arrival_airport = 5; // Renamed from arr_airport
+  string departure_date = 6; // Renamed from dep_date
+  string arrival_date = 7; // Renamed from arr_date
+  string departure_time = 8; // Renamed from dep_time
+  string arrival_time = 9; // Renamed from arr_time
+  google.protobuf.Timestamp departure_date_time = 10; // Renamed from dep_datetime
+  google.protobuf.Timestamp arrival_date_time = 11; // Renamed from arr_datetime
+  double economy_fare = 12;
+  double business_fare = 13;
+}
+
+message Path {
+  int32 path_id = 1;
+  repeated FlightDetailsAdmin flights = 2;
+  int32 number_of_stops = 3;
+  double total_travel_time = 4;
+  string departure_airport = 5;
+  string arrival_airport = 6;
+}
+
+message SearchFlightResponseAdmin {
+  repeated Path direct_path = 1;
+  repeated Path return_path = 2;
+  string departure_airport = 3;
+  string arrival_airport = 4;
+}
+
+message SelectFlightAdmin {
+  string token = 1;
+  string direct_path_id = 2;
+  string return_path_id = 3;
+  int32 adults = 4;
+  int32 children = 5;
+  bool economy = 6;
+}
+
+message SelectFlightAdminResponse {
+
+}
+
+message FlightDetails {
+  string flight_number = 1;
+  string airline = 2;
+  string departure_airport = 3;
+  string departure_date = 4;
+  string departure_time = 5;
+  string arrival_airport = 6;
+  string arrival_date = 7;
+  string arrival_time = 8;
+  float flight_fare = 9;
+  uint32 flight_chart_id = 10;
+}
+
+message SearchFlightDetails {
+  int32 path_id = 1;
+  int32 number_of_stops = 2;
+  repeated FlightDetails flight_segment = 3;
+}
+
+message SearchFlightResponse1 {
+  int32 total_direct_flights = 1;
+  int32 total_return_flights = 2;
+  repeated SearchFlightDetails to_flights = 3;
+  repeated SearchFlightDetails return_flights = 4;
+  string search_token = 5;
+  string departure_airport = 6;
+  string arrival_airport = 7;
+}
+
+message Cancellation {
+  float cancellation_percentage = 1;
+  int32 cancellation_deadline_before = 2;
+  bool refundable = 3;
+}
+
+message Baggage {
+  float cabin_allowed_height = 1;
+  float cabin_allowed_weight = 2;
+  float cabin_allowed_breadth = 3;
+  float cabin_allowed_length = 4;
+  float hand_allowed_height = 5;
+  float hand_allowed_weight = 6;
+  float hand_allowed_breadth = 7;
+  float hand_allowed_length = 8;
+  float fee_extra_per_kg_hand = 9;
+  float fee_extra_per_kg_cabin = 10;
+  string restrictions = 11;
+}
+
+message FlightFacilities {
+  Cancellation cancellation = 1;
+  Baggage baggage = 2;
+  SearchFlightDetails flight_path = 3;
+  float fare = 4;
+}
+
+message CompleteFlightDetails {
+  FlightFacilities direct_flight = 1;
+  FlightFacilities return_flight = 2;
+  int32 number_of_adults = 3;
+  int32 number_of_children = 4;
+  string cabin_class = 5;
+  string departure_airport = 6;
+  string arrival_Airport = 7;
 }

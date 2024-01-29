@@ -24,6 +24,8 @@ const _ = grpc.SupportPackageIsVersion7
 type AdminServiceClient interface {
 	RegisterSelectSeat(ctx context.Context, in *SeatRequest, opts ...grpc.CallOption) (*SeatResponse, error)
 	AddConfirmedSeats(ctx context.Context, in *ConfirmedSeatRequest, opts ...grpc.CallOption) (*ConfirmedSeatResponse, error)
+	RegisterSearchFlight(ctx context.Context, in *SearchFlightRequestAdmin, opts ...grpc.CallOption) (*SearchFlightResponseAdmin, error)
+	RegisterSelectFlight(ctx context.Context, in *SelectFlightAdmin, opts ...grpc.CallOption) (*CompleteFlightDetails, error)
 }
 
 type adminServiceClient struct {
@@ -52,12 +54,32 @@ func (c *adminServiceClient) AddConfirmedSeats(ctx context.Context, in *Confirme
 	return out, nil
 }
 
+func (c *adminServiceClient) RegisterSearchFlight(ctx context.Context, in *SearchFlightRequestAdmin, opts ...grpc.CallOption) (*SearchFlightResponseAdmin, error) {
+	out := new(SearchFlightResponseAdmin)
+	err := c.cc.Invoke(ctx, "/admin.AdminService/RegisterSearchFlight", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) RegisterSelectFlight(ctx context.Context, in *SelectFlightAdmin, opts ...grpc.CallOption) (*CompleteFlightDetails, error) {
+	out := new(CompleteFlightDetails)
+	err := c.cc.Invoke(ctx, "/admin.AdminService/RegisterSelectFlight", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdminServiceServer is the server API for AdminService service.
 // All implementations must embed UnimplementedAdminServiceServer
 // for forward compatibility
 type AdminServiceServer interface {
 	RegisterSelectSeat(context.Context, *SeatRequest) (*SeatResponse, error)
 	AddConfirmedSeats(context.Context, *ConfirmedSeatRequest) (*ConfirmedSeatResponse, error)
+	RegisterSearchFlight(context.Context, *SearchFlightRequestAdmin) (*SearchFlightResponseAdmin, error)
+	RegisterSelectFlight(context.Context, *SelectFlightAdmin) (*CompleteFlightDetails, error)
 	mustEmbedUnimplementedAdminServiceServer()
 }
 
@@ -70,6 +92,12 @@ func (UnimplementedAdminServiceServer) RegisterSelectSeat(context.Context, *Seat
 }
 func (UnimplementedAdminServiceServer) AddConfirmedSeats(context.Context, *ConfirmedSeatRequest) (*ConfirmedSeatResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddConfirmedSeats not implemented")
+}
+func (UnimplementedAdminServiceServer) RegisterSearchFlight(context.Context, *SearchFlightRequestAdmin) (*SearchFlightResponseAdmin, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterSearchFlight not implemented")
+}
+func (UnimplementedAdminServiceServer) RegisterSelectFlight(context.Context, *SelectFlightAdmin) (*CompleteFlightDetails, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterSelectFlight not implemented")
 }
 func (UnimplementedAdminServiceServer) mustEmbedUnimplementedAdminServiceServer() {}
 
@@ -120,6 +148,42 @@ func _AdminService_AddConfirmedSeats_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_RegisterSearchFlight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchFlightRequestAdmin)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).RegisterSearchFlight(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/admin.AdminService/RegisterSearchFlight",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).RegisterSearchFlight(ctx, req.(*SearchFlightRequestAdmin))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_RegisterSelectFlight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SelectFlightAdmin)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).RegisterSelectFlight(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/admin.AdminService/RegisterSelectFlight",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).RegisterSelectFlight(ctx, req.(*SelectFlightAdmin))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AdminService_ServiceDesc is the grpc.ServiceDesc for AdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,6 +198,14 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddConfirmedSeats",
 			Handler:    _AdminService_AddConfirmedSeats_Handler,
+		},
+		{
+			MethodName: "RegisterSearchFlight",
+			Handler:    _AdminService_RegisterSearchFlight_Handler,
+		},
+		{
+			MethodName: "RegisterSelectFlight",
+			Handler:    _AdminService_RegisterSelectFlight_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

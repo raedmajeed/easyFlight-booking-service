@@ -40,7 +40,7 @@ message SearchFlightRequest {
   string passenger_type = 10;
 }
 
-message FlightDetails {
+message FlightDetail {
   string flight_number = 1;
   string airline = 2;
   string departure_airport = 3;
@@ -50,19 +50,20 @@ message FlightDetails {
   string arrival_date = 7;
   string arrival_time = 8;
   float flight_fare = 9;
+  uint32 flight_chart_id = 10;
 }
 
-message SearchFlightDetails {
+message SearchFlightDetail {
   int32 path_id = 1;
   int32 number_of_stops = 2;
-  repeated FlightDetails flight_segment = 3;
+  repeated FlightDetail flight_segment = 3;
 }
 
 message SearchFlightResponse {
   int32 total_direct_flights = 1;
   int32 total_return_flights = 2;
-  repeated SearchFlightDetails to_flights = 3;
-  repeated SearchFlightDetails return_flights = 4;
+  repeated SearchFlightDetail to_flights = 3;
+  repeated SearchFlightDetail return_flights = 4;
   string search_token = 5;
 }
 
@@ -72,13 +73,13 @@ message SearchSelectRequest {
   string return_path_id = 3;
 }
 
-message Cancellation {
+message CancellationBooking {
   int32 cancellation_deadline_before = 1;
   int32 cancellation_percentage = 2;
   bool refundable = 3;
 }
 
-message Baggage {
+message BaggageBooking {
   int32 cabin_allowed_weight = 1;
   int32 cabin_allowed_length = 2;
   int32 cabin_allowed_breadth = 3;
@@ -93,9 +94,10 @@ message Baggage {
 }
 
 message Facilities {
-  Cancellation cancellation = 1;
-  Baggage baggage = 2;
-  SearchFlightDetails path = 3;
+  CancellationBooking cancellation = 1;
+  BaggageBooking baggage = 2;
+  SearchFlightDetail flight_path = 3;
+  float fare = 4;
 }
 
 message SearchSelectResponse {
@@ -194,13 +196,15 @@ message ConfirmBookingResponse {
   string cabin_class = 5;
   string booking_reference = 6;
   string token = 7;
+  float direct_flight_fare = 8;
+  float return_flight_fare = 9;
 }
 
 message DirectReturnFlight {
-  repeated FlightDetails flight_details = 1;
+  repeated FlightDetail flight_details = 1;
   int32 number_of_stops = 2;
-  Cancellation cancellation = 3;
-  Baggage baggage = 4;
+  CancellationBooking cancellation = 3;
+  BaggageBooking baggage = 4;
 }
 
 message OnlinePaymentRequest {

@@ -3,12 +3,8 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
-	dom "github.com/raedmajeed/booking-service/pkg/DOM"
 	pb "github.com/raedmajeed/booking-service/pkg/pb"
 	"github.com/raedmajeed/booking-service/pkg/utils"
-	"github.com/segmentio/kafka-go"
 	"log"
 	"time"
 )
@@ -24,69 +20,37 @@ type SelectRequest struct {
 
 func (svc *BookingServiceStruct) SearchSelect(ctx context.Context, request *pb.SearchSelectRequest) (*pb.SearchSelectResponse, error) {
 	token := request.Token
-	var completeFacilities dom.CompleteFlightFacilities
 	claims, err := utils.ValidateSearchToken(token, *svc.cfg)
 	if err != nil {
 		log.Println("search token is expired or null, please check")
 		return nil, err
 	}
-
 	directPathID := request.DirectPathId
 	returnPathID := request.ReturnPathId
 
-	//type check struct
-	selectReq := SelectRequest{
+	resp, err := svc.client.RegisterSelectFlight(ctx, &pb.SelectFlightAdmin{
 		Token:        token,
 		DirectPathId: directPathID,
 		ReturnPathId: returnPathID,
-		Adults:       claims.Adults,
-		Children:     claims.Children,
+		Adults:       int32(claims.Adults),
+		Children:     int32(claims.Children),
 		Economy:      claims.Economy,
-	}
-
-	marshal, err := json.Marshal(selectReq)
-	if err != nil {
-		log.Println("error marshalling json SearchSelect() - search_select_svc 1")
-		return nil, err
-	}
-	err = svc.kf.SearchSelectWriter.WriteMessages(context.Background(), kafka.Message{
-		Value: marshal,
 	})
-	if err != nil {
-		log.Println("failed to write message to kafka from booking service to admin service")
-		return nil, err
-	}
-	fmt.Println("waiting for message from admin service")
-	message := svc.kf2.SearchSelectReaderMethod(ctx)
 
-	msg := message.Value
-	err = json.Unmarshal(msg, &completeFacilities)
-	if err != nil {
-		log.Println("error unmarshalling json SearchSelect() - search_select_svc 2")
-		return nil, err
-	}
-
-	if completeFacilities.DirectFlight.FlightPath.PathId < 0 {
-		return nil, errors.New("unable to fetch the flight details")
-	}
-
-	response := ConvertToResponse(completeFacilities, claims.Economy)
-	svc.redis.Set(ctx, token+"1", message.Value, time.Minute*10)
+	response := ConvertToResponse(resp, claims.Economy)
+	marshal, err := json.Marshal(resp)
+	svc.redis.Set(ctx, token+"1", marshal, time.Minute*10)
 	return response, nil
 }
 
-func ConvertToResponse(cf dom.CompleteFlightFacilities, economy bool) *pb.SearchSelectResponse {
+func ConvertToResponse(cf *pb.CompleteFlightDetails, economy bool) *pb.SearchSelectResponse {
 	directFlight := cf.DirectFlight
 	returnFlight := cf.ReturnFlight
-	var fd1 []*pb.FlightDetails
-	var fd2 []*pb.FlightDetails
+	var fd1 []*pb.FlightDetail
+	var fd2 []*pb.FlightDetail
 
-	for _, f := range directFlight.FlightPath.Flights {
-		fare := f.EconomyFare
-		if !economy {
-			fare = f.BusinessFare
-		}
-		fd1 = append(fd1, &pb.FlightDetails{
+	for _, f := range directFlight.FlightPath.FlightSegment {
+		fd1 = append(fd1, &pb.FlightDetail{
 			FlightNumber:     f.FlightNumber,
 			Airline:          f.Airline,
 			DepartureAirport: f.DepartureAirport,
@@ -95,13 +59,13 @@ func ConvertToResponse(cf dom.CompleteFlightFacilities, economy bool) *pb.Search
 			ArrivalAirport:   f.ArrivalAirport,
 			ArrivalDate:      f.ArrivalDate,
 			ArrivalTime:      f.ArrivalTime,
-			FlightFare:       float32(fare),
+			FlightFare:       f.FlightFare,
 		})
 	}
 
 	cd := directFlight.Cancellation
 	bd := directFlight.Baggage
-	bg1 := &pb.Baggage{
+	bg1 := &pb.BaggageBooking{
 		CabinAllowedBreadth: int32(bd.CabinAllowedBreadth),
 		CabinAllowedLength:  int32(bd.CabinAllowedLength),
 		CabinAllowedWeight:  int32(bd.CabinAllowedWeight),
@@ -110,32 +74,34 @@ func ConvertToResponse(cf dom.CompleteFlightFacilities, economy bool) *pb.Search
 		HandAllowedBreadth:  int32(bd.HandAllowedBreadth),
 		HandAllowedWeight:   int32(bd.HandAllowedWeight),
 		HandAllowedHeight:   int32(bd.HandAllowedHeight),
-		FeeForExtraKgCabin:  int32(bd.FeeExtraPerKGCabin),
-		FeeForExtraKgHand:   int32(bd.FeeExtraPerKGHand),
+		FeeForExtraKgCabin:  int32(bd.FeeExtraPerKgCabin),
+		FeeForExtraKgHand:   int32(bd.FeeExtraPerKgHand),
 	}
-	c1 := &pb.Cancellation{
+	c1 := &pb.CancellationBooking{
 		CancellationDeadlineBefore: int32(cd.CancellationDeadlineBefore),
 		CancellationPercentage:     int32(cd.CancellationPercentage),
 		Refundable:                 cd.Refundable,
 	}
-	sd1 := &pb.SearchFlightDetails{
+	sd1 := &pb.SearchFlightDetail{
 		PathId:        int32(directFlight.FlightPath.PathId),
 		NumberOfStops: int32(directFlight.FlightPath.NumberOfStops),
 		FlightSegment: fd1,
 	}
+	var fare float32
+	if len(directFlight.FlightPath.FlightSegment) > 0 {
+		fare = directFlight.FlightPath.FlightSegment[0].FlightFare
+	}
 	df := &pb.Facilities{
 		Cancellation: c1,
 		Baggage:      bg1,
-		Path:         sd1,
+		FlightPath:   sd1,
+		Fare:         fare,
 	}
 
 	// Return Flight
-	for _, f := range returnFlight.FlightPath.Flights {
-		fare := f.EconomyFare
-		if !economy {
-			fare = f.BusinessFare
-		}
-		fd2 = append(fd2, &pb.FlightDetails{
+	log.Println("3 ===")
+	for _, f := range returnFlight.FlightPath.FlightSegment {
+		fd2 = append(fd2, &pb.FlightDetail{
 			FlightNumber:     f.FlightNumber,
 			Airline:          f.Airline,
 			DepartureAirport: f.DepartureAirport,
@@ -144,12 +110,12 @@ func ConvertToResponse(cf dom.CompleteFlightFacilities, economy bool) *pb.Search
 			ArrivalAirport:   f.ArrivalAirport,
 			ArrivalDate:      f.ArrivalDate,
 			ArrivalTime:      f.ArrivalTime,
-			FlightFare:       float32(fare),
+			FlightFare:       f.FlightFare,
 		})
 	}
 	ca := returnFlight.Cancellation
 	ba := returnFlight.Baggage
-	bg2 := &pb.Baggage{
+	bg2 := &pb.BaggageBooking{
 		CabinAllowedLength:  int32(ba.CabinAllowedLength),
 		CabinAllowedBreadth: int32(ba.CabinAllowedBreadth),
 		CabinAllowedWeight:  int32(ba.CabinAllowedWeight),
@@ -158,23 +124,28 @@ func ConvertToResponse(cf dom.CompleteFlightFacilities, economy bool) *pb.Search
 		HandAllowedBreadth:  int32(ba.HandAllowedBreadth),
 		HandAllowedWeight:   int32(ba.HandAllowedWeight),
 		HandAllowedHeight:   int32(ba.HandAllowedHeight),
-		FeeForExtraKgCabin:  int32(ba.FeeExtraPerKGCabin),
-		FeeForExtraKgHand:   int32(ba.FeeExtraPerKGHand),
+		FeeForExtraKgCabin:  int32(ba.FeeExtraPerKgCabin),
+		FeeForExtraKgHand:   int32(ba.FeeExtraPerKgHand),
 	}
-	c2 := &pb.Cancellation{
+	c2 := &pb.CancellationBooking{
 		CancellationDeadlineBefore: int32(ca.CancellationDeadlineBefore),
 		CancellationPercentage:     int32(ca.CancellationPercentage),
 		Refundable:                 ca.Refundable,
 	}
-	sd2 := &pb.SearchFlightDetails{
+	sd2 := &pb.SearchFlightDetail{
 		PathId:        int32(returnFlight.FlightPath.PathId),
 		NumberOfStops: int32(returnFlight.FlightPath.NumberOfStops),
 		FlightSegment: fd2,
 	}
+	if len(directFlight.FlightPath.FlightSegment) > 0 {
+		fare = directFlight.FlightPath.FlightSegment[0].FlightFare
+	}
+
 	rf := &pb.Facilities{
 		Cancellation: c2,
 		Baggage:      bg2,
-		Path:         sd2,
+		FlightPath:   sd2,
+		Fare:         fare,
 	}
 
 	result := &pb.SearchSelectResponse{
