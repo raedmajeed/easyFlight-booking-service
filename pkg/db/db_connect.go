@@ -2,15 +2,15 @@ package db
 
 import (
 	"fmt"
+	"github.com/raedmajeed/booking-service"
 	"github.com/raedmajeed/booking-service/pkg/DOM"
 	"log"
 
-	"github.com/raedmajeed/booking-service/config"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
-func NewDBConnect(cfg *config.ConfigParams) (*gorm.DB, error) {
+func NewDBConnect(cfg *easyFlight_booking_service.ConfigParams) (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName,

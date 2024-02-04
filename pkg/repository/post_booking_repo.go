@@ -22,3 +22,7 @@ func (repo *BookingRepositoryStruct) FindTravellerById(id uint) (*dom.Traveller,
 	result := repo.DB.Where("id = ?", id).First(&data).Error
 	return &data, result
 }
+
+func (repo *BookingRepositoryStruct) UpdateTravellerSeat(id uint, seat string) error {
+	return repo.DB.Model(&dom.Traveller{}).Where("id = ?", id).Update("seat_no", seat).Error
+}

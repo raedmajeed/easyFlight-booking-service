@@ -2,12 +2,12 @@ package utils
 
 import (
 	"errors"
+	"github.com/raedmajeed/booking-service"
 	"github.com/raedmajeed/booking-service/pkg/DOM"
 	"log"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/raedmajeed/booking-service/config"
 )
 
 type Claims struct {
@@ -24,7 +24,7 @@ type SearchClaims struct {
 	jwt.StandardClaims
 }
 
-func GenerateToken(email, role string, cfg *config.ConfigParams) (string, error) {
+func GenerateToken(email, role string, cfg *easyFlight_booking_service.ConfigParams) (string, error) {
 	expireTime := time.Now().Add(time.Minute * 20).Unix()
 	claims := &Claims{
 		Email: email,
@@ -45,7 +45,7 @@ func GenerateToken(email, role string, cfg *config.ConfigParams) (string, error)
 	return signedToken, nil
 }
 
-func GeneratePNRToken(pnr, role string, cfg *config.ConfigParams) (string, error) {
+func GeneratePNRToken(pnr, role string, cfg *easyFlight_booking_service.ConfigParams) (string, error) {
 	expireTime := time.Now().Add(time.Minute * 20).Unix()
 	claims := &Claims{
 		Email: pnr,
@@ -66,7 +66,7 @@ func GeneratePNRToken(pnr, role string, cfg *config.ConfigParams) (string, error
 	return signedToken, nil
 }
 
-func GenerateSearchToken(info *DOM.AdditionalInfo, cfg *config.ConfigParams) (string, error) {
+func GenerateSearchToken(info *DOM.AdditionalInfo, cfg *easyFlight_booking_service.ConfigParams) (string, error) {
 	expireTime := time.Now().Add(time.Minute * 55).Unix()
 	claims := &SearchClaims{
 		Adults:        info.AdultsCount,
@@ -88,7 +88,7 @@ func GenerateSearchToken(info *DOM.AdditionalInfo, cfg *config.ConfigParams) (st
 	return signedToken, nil
 }
 
-func ValidateSearchToken(token string, cfg config.ConfigParams) (*SearchClaims, error) {
+func ValidateSearchToken(token string, cfg easyFlight_booking_service.ConfigParams) (*SearchClaims, error) {
 	if token == "" {
 		log.Print("search token missing")
 		return &SearchClaims{}, errors.New("search token missing")

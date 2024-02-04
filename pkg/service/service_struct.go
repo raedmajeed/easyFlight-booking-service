@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/go-redis/redis/v8"
+	"github.com/raedmajeed/booking-service"
 	"github.com/raedmajeed/booking-service/config"
 	pb "github.com/raedmajeed/booking-service/pkg/pb"
 	inter "github.com/raedmajeed/booking-service/pkg/repository/interfaces"
@@ -11,7 +12,7 @@ import (
 type BookingServiceStruct struct {
 	repo   inter.BookingRepository
 	redis  *redis.Client
-	cfg    *config.ConfigParams
+	cfg    *easyFlight_booking_service.ConfigParams
 	kf     *config.KafkaWriter
 	kf2    *config.KafkaReader2
 	twilio *config.TwilioVerify
@@ -19,7 +20,7 @@ type BookingServiceStruct struct {
 }
 
 func NewBookingService(repo inter.BookingRepository, redis *redis.Client,
-	cfg *config.ConfigParams, kf *config.KafkaWriter, kf2 *config.KafkaReader2,
+	cfg *easyFlight_booking_service.ConfigParams, kf *config.KafkaWriter, kf2 *config.KafkaReader2,
 	twilio *config.TwilioVerify, client pb.AdminServiceClient) interfaces.BookingService {
 	return &BookingServiceStruct{
 		repo:   repo,

@@ -1,7 +1,9 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	dom "github.com/raedmajeed/booking-service/pkg/DOM"
@@ -11,9 +13,9 @@ import (
 )
 
 func (svc *BookingServiceStruct) OnlinePayment(ctx context.Context, request *pb.OnlinePaymentRequest) (*pb.OnlinePaymentResponse, error) {
-	var flightDetails pb.ConfirmBookingResponse
 	email := request.Email
 	bookingReference := request.BookingReference
+	var flightDetails pb.ConfirmBookingResponse
 	val := svc.redis.Get(ctx, bookingReference).Val()
 	err := json.Unmarshal([]byte(val), &flightDetails)
 	if err != nil {
@@ -44,14 +46,6 @@ func (svc *BookingServiceStruct) OnlinePayment(ctx context.Context, request *pb.
 	}
 
 	orderId := body["id"].(string)
-	//type RazorpayDetails struct {
-	//	UserID           uint
-	//	TotalFare        int
-	//	BookingReference string
-	//	Email            string
-	//	OrderID          string
-	//}
-
 	return &pb.OnlinePaymentResponse{
 		UserId:           int32(bookingDetails.UserId),
 		TotalFare:        int32(fare),
@@ -63,6 +57,16 @@ func (svc *BookingServiceStruct) OnlinePayment(ctx context.Context, request *pb.
 
 func (svc *BookingServiceStruct) PaymentConfirmed(ctx context.Context, request *pb.PaymentConfirmedRequest) (*pb.PaymentConfirmedResponse, error) {
 	bookingReference := request.BookingReference
+	var flightDetails pb.ConfirmBookingResponse
+	valFare := svc.redis.Get(ctx, bookingReference).Val()
+	err := json.Unmarshal([]byte(valFare), &flightDetails)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling json err: %v", err.Error())
+	}
+
+	directAmount := flightDetails.DirectFlightFare
+	returnAmount := flightDetails.ReturnFlightFare
+	fare := int(directAmount) + int(returnAmount)
 	email := request.Email
 	bookingDetails, err := svc.repo.FindBooking(email, bookingReference)
 	if err != nil {
@@ -81,15 +85,15 @@ func (svc *BookingServiceStruct) PaymentConfirmed(ctx context.Context, request *
 		economy = false
 	}
 
-	directFlightCharts := req.DirectFlight.FlightPath.Flights
-	returnFlights := req.ReturnFlight.FlightPath.Flights
+	directFlightCharts := flightDetails.DirectFlight.FlightDetails
+	returnFlights := flightDetails.ReturnFlight.FlightDetails
 	var directFlights []int32
 	for _, f := range directFlightCharts {
-		directFlights = append(directFlights, int32(f.FlightChartID))
+		directFlights = append(directFlights, int32(f.FlightChartId))
 	}
 	var returnFlight []int32
 	for _, f := range returnFlights {
-		returnFlight = append(returnFlight, int32(f.FlightChartID))
+		returnFlight = append(returnFlight, int32(f.FlightChartId))
 	}
 
 	totalTravellers := req.NumberOfChildren + req.NumberOfAdults
@@ -106,7 +110,19 @@ func (svc *BookingServiceStruct) PaymentConfirmed(ctx context.Context, request *
 
 	bookingDetails.BookingStatus = "CONFIRMED"
 	bookingDetails.PaymentId = request.PaymentId
-	//bookingDetails.FlightChartIDs =
+	bookingDetails.TotalFare = fmt.Sprintf("%d", fare)
+
+	type ChartIds struct {
+		FlightChartIds []int32 `json:"flight_chart_ids"`
+	}
+	chd := &ChartIds{FlightChartIds: directFlights}
+	chr := &ChartIds{FlightChartIds: returnFlight}
+
+	marshalD, _ := json.Marshal(chd)
+	marshalR, _ := json.Marshal(chr)
+	bookingDetails.DirectFlightChartIds = marshalD
+	bookingDetails.ReturnFlightChartIds = marshalR
+
 	err = svc.repo.UpdateBookings(bookingDetails)
 	if err != nil {
 		return nil, err
@@ -114,6 +130,16 @@ func (svc *BookingServiceStruct) PaymentConfirmed(ctx context.Context, request *
 	return &pb.PaymentConfirmedResponse{
 		PaymentId: request.PaymentId,
 		BookingId: bookingReference,
-		PNR:       bookingDetails.PNR,
 	}, err
+}
+
+func int32ArrayToByteArray(input []int32) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	for _, value := range input {
+		err := binary.Write(buf, binary.LittleEndian, value)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return buf.Bytes(), nil
 }

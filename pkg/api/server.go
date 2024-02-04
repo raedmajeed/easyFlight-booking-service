@@ -3,7 +3,7 @@ package pkg
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/raedmajeed/booking-service/config"
+	"github.com/raedmajeed/booking-service"
 	"github.com/raedmajeed/booking-service/pkg/api/handlers"
 	pb "github.com/raedmajeed/booking-service/pkg/pb"
 	"github.com/raedmajeed/booking-service/pkg/service/interfaces"
@@ -14,19 +14,19 @@ import (
 
 type Server struct {
 	E      *gin.Engine
-	cfg    *config.ConfigParams
+	cfg    *easyFlight_booking_service.ConfigParams
 	svc    interfaces.BookingService
 	client pb.AdminServiceClient
 }
 
-func NewServer(cfg *config.ConfigParams, handler *handlers.BookingHandler, svc interfaces.BookingService) {
+func NewServer(cfg *easyFlight_booking_service.ConfigParams, handler *handlers.BookingHandler, svc interfaces.BookingService) {
 	err := NewGrpcServer(cfg, handler)
 	if err != nil {
 		log.Println("error connecting to gRPC server")
 	}
 }
 
-func NewGrpcServer(cfg *config.ConfigParams, handler *handlers.BookingHandler) error {
+func NewGrpcServer(cfg *easyFlight_booking_service.ConfigParams, handler *handlers.BookingHandler) error {
 	addr := fmt.Sprintf(":%s", cfg.BSERVICEPORT)
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {

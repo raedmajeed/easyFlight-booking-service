@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	dom "github.com/raedmajeed/booking-service/pkg/DOM"
 	"gorm.io/gorm"
 	"log"
@@ -36,11 +37,10 @@ func (repo *BookingRepositoryStruct) CreateUser(airline *dom.UserData) (*dom.Use
 
 func (repo *BookingRepositoryStruct) FindBookingByPNR(pnr string) (*dom.Booking, error) {
 	var booking dom.Booking
-	result := repo.DB.Where("PNR = ?", pnr).First(&booking)
+	result := repo.DB.Where("PNR = ? AND booking_status = 'CONFIRMED'", pnr).First(&booking)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			log.Printf("Record not found of user %v", pnr)
-			return nil, gorm.ErrRecordNotFound
+			return nil, fmt.Errorf("no registered user found %v", pnr)
 		} else {
 			return nil, result.Error
 		}

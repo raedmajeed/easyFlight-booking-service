@@ -1,11 +1,9 @@
-package config
+package easyFlight_booking_service
 
 import (
-	"log"
-
-	"github.com/go-playground/validator/v10"
 	"github.com/go-redis/redis/v8"
-	"github.com/spf13/viper"
+	"github.com/joho/godotenv"
+	"os"
 )
 
 type ConfigParams struct {
@@ -26,37 +24,29 @@ type ConfigParams struct {
 	RAZORPAYSECRETKEY string `mapstructure:"RAZORPAYSECRETKEY"`
 }
 
-var envs = []string{
-	"DBHOST", "DBNAME", "DBSUER", "DBPORT", "DBPASSWORD", "PORT", "ADMINPORT", "REDISHOST",
-	"SECRETKEY", "SERVICETOKEN", "SID", "TOKEN", "ADMINBOOKINGPORT", "RAZORPAYKEYID", "RAZORPAYSECRETKEY",
-}
-
 func Configuration() (*ConfigParams, error, *redis.Client) {
-	var cfg ConfigParams
-	viper.SetConfigFile("../../.env")
-	err := viper.ReadInConfig()
-	if err != nil {
-		log.Printf("Unable to load env values, err: %v", err.Error())
-		return &ConfigParams{}, err, nil
+	cfg := ConfigParams{}
+	if err := godotenv.Load("../../.env"); err != nil {
+		os.Exit(1)
 	}
 
-	for _, e := range envs {
-		if err := viper.BindEnv(e); err != nil {
-			return &cfg, err, nil
-		}
-	}
+	cfg.DBName = os.Getenv("DBNAME")
+	cfg.DBUser = os.Getenv("DBUSER")
+	cfg.DBPort = os.Getenv("DBPORT")
+	cfg.DBPassword = os.Getenv("DBPASSWORD")
+	cfg.PORT = os.Getenv("PORT")
+	cfg.BSERVICEPORT = os.Getenv("BSERVICEPORT")
+	cfg.REDISHOST = os.Getenv("REDISHOST")
+	cfg.SECRETKEY = os.Getenv("SECRETKEY")
+	cfg.SERVICETOKEN = os.Getenv("SERVICETOKEN")
+	cfg.TOKEN = os.Getenv("TOKEN")
+	cfg.SID = os.Getenv("SID")
+	cfg.ADMINBOOKINGPORT = os.Getenv("ADMINBOOKINGPORT")
+	cfg.RAZORPAYKEYID = os.Getenv("RAZORPAYKEYID")
+	cfg.RAZORPAYSECRETKEY = os.Getenv("RAZORPAYSECRETKEY")
 
-	err = viper.Unmarshal(&cfg)
-	if err != nil {
-		log.Printf("Unable to unmarshal values, err: %v", err.Error())
-	}
-
-	if err := validator.New().Struct(&cfg); err != nil {
-		return &cfg, err, nil
-	}
-
-	redis := connectToRedis(&cfg)
-	return &cfg, err, redis
+	redisClient := connectToRedis(&cfg)
+	return &cfg, nil, redisClient
 }
 
 func connectToRedis(cfg *ConfigParams) *redis.Client {

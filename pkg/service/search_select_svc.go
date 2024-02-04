@@ -60,6 +60,7 @@ func ConvertToResponse(cf *pb.CompleteFlightDetails, economy bool) *pb.SearchSel
 			ArrivalDate:      f.ArrivalDate,
 			ArrivalTime:      f.ArrivalTime,
 			FlightFare:       f.FlightFare,
+			FlightChartId:    f.FlightChartId,
 		})
 	}
 
@@ -98,8 +99,6 @@ func ConvertToResponse(cf *pb.CompleteFlightDetails, economy bool) *pb.SearchSel
 		Fare:         fare,
 	}
 
-	// Return Flight
-	log.Println("3 ===")
 	for _, f := range returnFlight.FlightPath.FlightSegment {
 		fd2 = append(fd2, &pb.FlightDetail{
 			FlightNumber:     f.FlightNumber,
@@ -111,6 +110,7 @@ func ConvertToResponse(cf *pb.CompleteFlightDetails, economy bool) *pb.SearchSel
 			ArrivalDate:      f.ArrivalDate,
 			ArrivalTime:      f.ArrivalTime,
 			FlightFare:       f.FlightFare,
+			FlightChartId:    f.FlightChartId,
 		})
 	}
 	ca := returnFlight.Cancellation

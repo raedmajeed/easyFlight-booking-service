@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	dom "github.com/raedmajeed/booking-service/pkg/DOM"
 	pb "github.com/raedmajeed/booking-service/pkg/pb"
 	"log"
 )
@@ -13,7 +14,6 @@ type JsonRequest struct {
 }
 
 func (svc *BookingServiceStruct) SelectSeat(ctx context.Context, p *pb.SeatSelectRequest) (*pb.SeatSelectResponse, error) {
-	// fetch the booking table using pnr number
 	booking, err := svc.repo.FindBookingByPNR(p.PNR)
 	if err != nil {
 		log.Println("error fetching booking from table, err: ", err.Error())
@@ -57,8 +57,21 @@ func (svc *BookingServiceStruct) SelectSeat(ctx context.Context, p *pb.SeatSelec
 		log.Println("error registering seats to the database SelectSeat() - booking-service")
 		return nil, err
 	}
+
+	AddSeatsToCustomer(svc, bookingDetails, response.SeatNos)
+
 	return &pb.SeatSelectResponse{
 		PNR:     response.PNR,
 		SeatNos: response.SeatNos,
 	}, nil
+}
+
+func AddSeatsToCustomer(svc *BookingServiceStruct, bookingDetails *dom.Booking, seats []string) {
+	travellerIds, err := svc.repo.FindNumberOfTravellers(bookingDetails.ID)
+	if err != nil {
+		log.Println("unable to assign seat details to travellers")
+	}
+	for i, t := range travellerIds {
+		err = svc.repo.UpdateTravellerSeat(t.TravellerId, seats[i])
+	}
 }

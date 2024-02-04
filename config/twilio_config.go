@@ -1,16 +1,17 @@
 package config
 
 import (
+	"github.com/raedmajeed/booking-service"
 	"github.com/twilio/twilio-go"
 	verify "github.com/twilio/twilio-go/rest/verify/v2"
 )
 
 type TwilioVerify struct {
 	Client *twilio.RestClient
-	Cfg    *ConfigParams
+	Cfg    *easyFlight_booking_service.ConfigParams
 }
 
-func SetupTwilio(cfg *ConfigParams) *TwilioVerify {
+func SetupTwilio(cfg *easyFlight_booking_service.ConfigParams) *TwilioVerify {
 	client := twilio.NewRestClientWithParams(twilio.ClientParams{
 		Username: cfg.SID,
 		Password: cfg.TOKEN,

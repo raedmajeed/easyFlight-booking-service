@@ -9,5 +9,6 @@ func (repo *BookingRepositoryStruct) FindBooking(email, bookingReference string)
 }
 
 func (repo *BookingRepositoryStruct) UpdateBookings(booking dom.Booking) error {
-	return repo.DB.Model(&dom.Booking{}).Where("booking_reference = ?", booking.BookingReference).Updates(booking).Error
+	return repo.DB.Model(&dom.Booking{}).Where("booking_reference = ?", booking.BookingReference).
+		Updates(booking).Error
 }

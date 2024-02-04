@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/raedmajeed/booking-service"
 	"github.com/raedmajeed/booking-service/config"
 	client "github.com/raedmajeed/booking-service/pkg/api"
 	"github.com/raedmajeed/booking-service/pkg/di"
@@ -8,7 +9,7 @@ import (
 )
 
 func main() {
-	cfg, err, redis := config.Configuration()
+	cfg, err, redis := easyFlight_booking_service.Configuration()
 	twilio := config.SetupTwilio(cfg)
 	c, err := client.NewGrpcClient(cfg)
 	if err != nil {

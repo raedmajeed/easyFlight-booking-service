@@ -51,10 +51,10 @@ func (svc *BookingServiceStruct) AddTraveller(ctx context.Context, request *pb.T
 
 	booking := dom.Booking{
 		BookingReference: bookingRefID,
+		PNR:              generatePNR(bookingRefID),
 		BookingStatus:    "PENDING",
 		UserId:           user.ID,
 		Bookings:         travellers,
-		PNR:              generatePNR(bookingRefID),
 		DepartureAirport: dep,
 		ArrivalAirport:   arr,
 		Email:            request.Email,

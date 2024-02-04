@@ -2,6 +2,7 @@ package di
 
 import (
 	"github.com/go-redis/redis/v8"
+	"github.com/raedmajeed/booking-service"
 	"github.com/raedmajeed/booking-service/config"
 	api "github.com/raedmajeed/booking-service/pkg/api"
 	"github.com/raedmajeed/booking-service/pkg/api/handlers"
@@ -15,7 +16,7 @@ import (
 	"syscall"
 )
 
-func InitApi(cfg *config.ConfigParams, redis *redis.Client, twilio *config.TwilioVerify, client ab.AdminServiceClient) {
+func InitApi(cfg *easyFlight_booking_service.ConfigParams, redis *redis.Client, twilio *config.TwilioVerify, client ab.AdminServiceClient) {
 
 	singalChan := make(chan os.Signal, 1)
 	DB, _ := db.NewDBConnect(cfg)

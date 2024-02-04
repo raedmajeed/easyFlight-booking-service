@@ -1,14 +1,14 @@
 package pkg
 
 import (
-	"github.com/raedmajeed/booking-service/config"
+	"github.com/raedmajeed/booking-service"
 	pb "github.com/raedmajeed/booking-service/pkg/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
 )
 
-func NewGrpcClient(cfg *config.ConfigParams) (*pb.AdminServiceClient, error) {
+func NewGrpcClient(cfg *easyFlight_booking_service.ConfigParams) (*pb.AdminServiceClient, error) {
 	log.Printf("dialing admin port: %v", cfg.ADMINBOOKINGPORT)
 	client, err := grpc.Dial(cfg.ADMINBOOKINGPORT, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {

@@ -14,12 +14,14 @@ func (svc *BookingServiceStruct) CheckAndSendBookingReminder() {
 	if err != nil {
 		marshal := utils.ErrorEmail(err, "CheckAndSendBookingReminder()", "service", "booking-service")
 		writeToKafka(svc, marshal)
+		return
 	}
 	for _, r := range response {
 		response, _ := svc.repo.FindBooking(r.Email, r.BookingReference)
 		if err != nil {
 			marshal := utils.ErrorEmail(err, "CheckAndSendBookingReminder()", "service", "booking-service")
 			writeToKafka(svc, marshal)
+			return
 		}
 		email := &DOM.EmailMessage{
 			Email:   r.Email,

@@ -56,6 +56,7 @@ func (svc *BookingServiceStruct) ConfirmBooking(ctx context.Context, p *pb.Confi
 			ArrivalAirport:   flight.ArrivalAirport,
 			ArrivalDate:      flight.ArrivalDate,
 			ArrivalTime:      flight.ArrivalTime,
+			FlightChartId:    flight.FlightChartId,
 		})
 		fare = flight.FlightFare
 	}
@@ -90,6 +91,7 @@ func (svc *BookingServiceStruct) ConfirmBooking(ctx context.Context, p *pb.Confi
 	var returnFlightList []*pb.FlightDetail
 	for _, flight := range returnFlight {
 		returnFlightList = append(returnFlightList, &pb.FlightDetail{
+			FlightChartId:    flight.FlightChartId,
 			FlightNumber:     flight.FlightNumber,
 			Airline:          flight.Airline,
 			DepartureAirport: flight.DepartureAirport,
