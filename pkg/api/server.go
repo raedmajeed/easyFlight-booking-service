@@ -22,7 +22,7 @@ type Server struct {
 func NewServer(cfg *easyFlight_booking_service.ConfigParams, handler *handlers.BookingHandler, svc interfaces.BookingService) {
 	err := NewGrpcServer(cfg, handler)
 	if err != nil {
-		log.Println("error connecting to gRPC server")
+		log.Println("error connecting to gRPC server", err.Error())
 	}
 }
 
@@ -30,31 +30,20 @@ func NewGrpcServer(cfg *easyFlight_booking_service.ConfigParams, handler *handle
 	addr := fmt.Sprintf(":%s", cfg.BSERVICEPORT)
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Println("error Connecting to gRPC server")
+		log.Println("error Connecting to gRPC server 1", err.Error())
 		return err
 	}
 	grp := grpc.NewServer()
 	pb.RegisterBookingServer(grp, handler)
 	if err != nil {
-		log.Println("error connecting to gRPC server")
+		log.Println("error connecting to gRPC server 2", err.Error())
 		return err
 	}
-
-	log.Printf("listening on gRPC server %v", cfg.BSERVICEPORT)
+	log.Printf("listening on gRPC server listening from API-service %v", cfg.BSERVICEPORT)
 	err = grp.Serve(lis)
 	if err != nil {
-		log.Println("error connecting to gRPC server")
+		log.Println("error connecting to gRPC server 3", err.Error())
 		return err
 	}
 	return nil
 }
-
-//func (s *Server) ServerStart() error {
-//	err := s.E.Run(":" + s.cfg.PORT)
-//	if err != nil {
-//		log.Println("error starting server")
-//		return err
-//	}
-//	log.Println("Server started")
-//	return nil
-//}

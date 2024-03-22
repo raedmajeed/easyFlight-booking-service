@@ -1,0 +1,37 @@
+name: easyFlight-booking-service
+
+on:
+  push:
+    branches: ["pre-hosting"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21.3'
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag booking-service:23
+
+      - name: Tag the Docker Image
+        run: docker tag booking-service:23 raedmajeed/booking-service:23
+
+      - name: DockerHub Login
+        run: |
+          echo "Raed786**" | docker login -u raedmajeed --password-stdin docker.io
+
+      - name: Push to docker hub
+        run: docker push raedmajeed/booking-service:23
+
+      - name: Start new process in the background
+        run: go run cmd/api/main.go &

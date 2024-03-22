@@ -2,7 +2,7 @@ package easyFlight_booking_service
 
 import (
 	"github.com/go-redis/redis/v8"
-	"github.com/joho/godotenv"
+	"log"
 	"os"
 )
 
@@ -26,11 +26,12 @@ type ConfigParams struct {
 
 func Configuration() (*ConfigParams, error, *redis.Client) {
 	cfg := ConfigParams{}
-	if err := godotenv.Load("../../.env"); err != nil {
-		os.Exit(1)
-	}
+	//if err := godotenv.Load("../../.env"); err != nil {
+	//	os.Exit(1)
+	//}
 
 	cfg.DBName = os.Getenv("DBNAME")
+	cfg.DBHost = os.Getenv("DBHOST")
 	cfg.DBUser = os.Getenv("DBUSER")
 	cfg.DBPort = os.Getenv("DBPORT")
 	cfg.DBPassword = os.Getenv("DBPASSWORD")
@@ -44,6 +45,8 @@ func Configuration() (*ConfigParams, error, *redis.Client) {
 	cfg.ADMINBOOKINGPORT = os.Getenv("ADMINBOOKINGPORT")
 	cfg.RAZORPAYKEYID = os.Getenv("RAZORPAYKEYID")
 	cfg.RAZORPAYSECRETKEY = os.Getenv("RAZORPAYSECRETKEY")
+
+	log.Println("version 10 -> docker", cfg)
 
 	redisClient := connectToRedis(&cfg)
 	return &cfg, nil, redisClient
