@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-13-xlarge
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
 
@@ -21,17 +21,17 @@ jobs:
         run: go build -v ./...
 
       - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag booking-service:1
+        run: sudo docker build . --file Dockerfile --tag booking-service:1
 
       - name: Tag the Docker Image
-        run: docker tag booking-service:1 raedmajeed/booking-service:1
+        run: sudo docker tag booking-service:1 raedmajeed/booking-service:1
 
       - name: DockerHub Login
         run: |
-          echo "Raed786**" | docker login -u raedmajeed --password-stdin docker.io
+          echo "Raed786**" | sudo docker login -u raedmajeed --password-stdin docker.io
 
       - name: Push to docker hub
-        run: docker push raedmajeed/booking-service:1
+        run: sudo docker push raedmajeed/booking-service:1
 
       - name: Start new process in the background
         run: go run cmd/api/main.go &

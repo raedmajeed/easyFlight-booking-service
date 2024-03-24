@@ -46,7 +46,7 @@ func Configuration() (*ConfigParams, error, *redis.Client) {
 	cfg.RAZORPAYKEYID = os.Getenv("RAZORPAYKEYID")
 	cfg.RAZORPAYSECRETKEY = os.Getenv("RAZORPAYSECRETKEY")
 
-	log.Println("version 10 -> docker", cfg)
+	log.Println("booking-service env -> ", cfg)
 
 	redisClient := connectToRedis(&cfg)
 	return &cfg, nil, redisClient
