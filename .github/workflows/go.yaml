@@ -21,17 +21,17 @@ jobs:
         run: go build -v ./...
 
       - name: Build the Docker images
-        run: sudo docker build . --file Dockerfile --tag booking-service:1
+        run: sudo docker build . --file Dockerfile --tag booking-service:2
 
       - name: Tag the Docker Image
-        run: sudo docker tag booking-service:1 raedmajeed/booking-service:1
+        run: sudo docker tag booking-service:2 raedmajeed/booking-service:2
 
       - name: DockerHub Login
         run: |
           echo "Raed786**" | sudo docker login -u raedmajeed --password-stdin docker.io
 
       - name: Push to docker hub
-        run: sudo docker push raedmajeed/booking-service:1
+        run: sudo docker push raedmajeed/booking-service:2
 
       - name: Start new process in the background
         run: go run cmd/api/main.go &
