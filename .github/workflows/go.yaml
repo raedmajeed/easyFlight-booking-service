@@ -20,7 +20,7 @@ jobs:
       - name: Build
         run: go build -v ./...
 
-      - name: Build the Docker image
+      - name: Build the Docker images
         run: sudo docker build . --file Dockerfile --tag booking-service:1
 
       - name: Tag the Docker Image
